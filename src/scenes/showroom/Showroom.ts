@@ -4,7 +4,7 @@ import floorVert from './shaders/floor.vert.glsl?raw';
 import floorFrag from './shaders/floor.frag.glsl?raw';
 import backlightVert from './shaders/backlight.vert.glsl?raw';
 import backlightFrag from './shaders/backlight.frag.glsl?raw';
-import { makeExhibitTexture, makeGlowTexture } from './textures';
+import { makeExhibitTexture, makeGlowTexture, type ExhibitTheme } from './textures';
 
 const BG = 0x05060a;
 const APERTURE = new THREE.Vector3(0, 4.2, -30);
@@ -129,29 +129,50 @@ export class Showroom {
   }
 
   private exhibit(
-    texture: THREE.CanvasTexture,
+    theme: ExhibitTheme,
     pos: [number, number, number],
     facing: 1 | -1,
+    size: [number, number],
   ): void {
     const group = new THREE.Group();
+    const [pw, ph] = size;
 
-    // Warm-dark matte frame behind the plate.
+    // Thin matte frame, slightly larger than the work — a deliberate margin.
     const frameMat = this.track(
-      new THREE.MeshBasicMaterial({ color: facing === 1 ? 0x1c1610 : 0x121620, fog: true }),
+      new THREE.MeshBasicMaterial({ color: 0x0c0d12, fog: true }),
     );
-    const frameGeo = this.track(new THREE.PlaneGeometry(3.7, 4.6));
-    const frame = new THREE.Mesh(frameGeo, frameMat);
+    const frame = new THREE.Mesh(
+      this.track(new THREE.PlaneGeometry(pw + 0.5, ph + 0.5)),
+      frameMat,
+    );
     group.add(frame);
 
-    // The exhibit plate itself.
-    this.track(texture);
+    // The work itself.
+    const texture = this.track(makeExhibitTexture(theme));
     const plateMat = this.track(
       new THREE.MeshBasicMaterial({ map: texture, fog: true, toneMapped: false }),
     );
-    const plateGeo = this.track(new THREE.PlaneGeometry(3.3, 4.1));
-    const plate = new THREE.Mesh(plateGeo, plateMat);
+    const plate = new THREE.Mesh(this.track(new THREE.PlaneGeometry(pw, ph)), plateMat);
     plate.position.z = 0.02;
     group.add(plate);
+
+    // A soft spotlight wash above the work — it reads as deliberately lit.
+    const spotTex = this.track(makeGlowTexture());
+    const spotMat = this.track(
+      new THREE.SpriteMaterial({
+        map: spotTex,
+        color: theme === 'space' ? 0xbcd2f0 : 0xffe7c4,
+        transparent: true,
+        opacity: 0.22,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        fog: true,
+      }),
+    );
+    const spot = new THREE.Sprite(spotMat);
+    spot.scale.set(pw * 1.5, ph * 1.2, 1);
+    spot.position.set(0, ph * 0.1, 0.05);
+    group.add(spot);
 
     group.position.set(pos[0], pos[1], pos[2]);
     // Face the path, angled slightly toward the entrance so visitors approach it.
@@ -160,9 +181,13 @@ export class Showroom {
   }
 
   private buildExhibits(): void {
-    // Two exhibits only — one warm, one cool — staggered down the path.
-    this.exhibit(makeExhibitTexture('warm'), [6.7, 2.7, -8], -1);
-    this.exhibit(makeExhibitTexture('cool'), [-6.7, 2.7, -15], 1);
+    // Three works, each a kind of value, placed with intent along the path:
+    //   Craft — closest and intimate (small, low, warm): the making.
+    //   Space — mid, taller and airier: the atmosphere of a place.
+    //   Trust — deepest, near the light, calm and centred: the relationship.
+    this.exhibit('craft', [6.6, 2.4, -7], -1, [3.0, 3.7]);
+    this.exhibit('space', [-6.8, 3.0, -14], 1, [3.4, 4.6]);
+    this.exhibit('trust', [6.9, 2.7, -21], -1, [3.1, 4.0]);
   }
 
   private buildBackLight(): void {
@@ -182,9 +207,10 @@ export class Showroom {
     });
     this.track(this.backlightMat);
 
-    const geo = this.track(new THREE.PlaneGeometry(11, 9));
+    // Tall and narrow, standing on the floor — a doorway, not a panel.
+    const geo = this.track(new THREE.PlaneGeometry(7.5, 12));
     const light = new THREE.Mesh(geo, this.backlightMat);
-    light.position.copy(APERTURE);
+    light.position.set(APERTURE.x, 5.4, APERTURE.z);
     this.scene.add(light);
   }
 
@@ -260,8 +286,9 @@ export class Showroom {
 
     // The doorway of light opens as we move in.
     const open = smoothstep(0.04, 0.82, s);
-    // Brightness stays full through Hero, then settles for Meaning / Issue.
-    const exposure = 1 - 0.4 * smoothstep(0.32, 1, s);
+    // Brightness stays full through Hero, then settles for Meaning and sinks
+    // further for Issue so the words read strongly without cutting the space.
+    const exposure = 1 - 0.55 * smoothstep(0.3, 1, s);
 
     this.floorMat.uniforms.uTime.value = t;
     this.floorMat.uniforms.uOpen.value = open;

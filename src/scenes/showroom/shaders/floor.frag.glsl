@@ -41,12 +41,13 @@ void main() {
 
   float guides = clamp(center + rails + ticks * 0.6, 0.0, 1.0);
 
-  // The guideline brightens as it approaches the light.
-  float guideGlow = mix(0.18, 1.0, pool);
-  col += uGlow * guides * guideGlow * 0.9;
+  // The guideline brightens as it approaches the light. Kept subtle so it
+  // guides the eye without reading as a VJ / tron grid (~40% of former level).
+  float guideGlow = mix(0.12, 0.6, pool);
+  col += uGlow * guides * guideGlow * 0.5;
 
-  // Light pool wash on the floor.
-  col += uGlow * pool * 0.5;
+  // Light pool wash on the floor — soft, just enough to ground the space.
+  col += uGlow * pool * 0.28;
 
   // Very slow shimmer so the floor feels material, never static, never flashy.
   float shimmer = 0.97 + 0.03 * sin(uTime * 0.5 + vWorld.z * 0.4);
