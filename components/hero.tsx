@@ -9,7 +9,12 @@ export function Hero() {
       className="theme-navy relative z-10 flex min-h-svh items-center"
       aria-label="眺めるWebから、入り込むWebへ"
     >
-      <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
+      {/* コピー最優先：左側を濃いスクリムで守り、写真・粒子・光が文字裏に来ても可読性を保つ。 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/75 via-background/25 to-background/55 md:bg-gradient-to-r md:from-background/80 md:via-background/25 md:to-transparent"
+      />
+      <div className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-10">
         <div className="max-w-2xl will-change-transform">
           <p className="animate-fade-up font-mono text-[11px] uppercase tracking-[0.35em] text-muted-foreground">
             Experience-driven Web Design

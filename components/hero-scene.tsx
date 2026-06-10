@@ -20,9 +20,9 @@ export function HeroScene({
       {!reduced && (
         <EffectComposer>
           <Bloom
-            intensity={0.95}
-            luminanceThreshold={0.22}
-            luminanceSmoothing={0.36}
+            intensity={0.55}
+            luminanceThreshold={0.34}
+            luminanceSmoothing={0.5}
             mipmapBlur
           />
         </EffectComposer>

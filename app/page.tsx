@@ -16,7 +16,7 @@ import { Contact, SiteFooter } from '@/components/contact'
 
 export default function Page() {
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[oklch(0.17_0.03_258)]">
+    <main className="relative min-h-screen overflow-x-hidden bg-[oklch(0.12_0.01_258)]">
       <FixedWebGLBackground />
       <div className="relative z-10">
         <SiteHeader />

@@ -408,12 +408,44 @@ function clamp(value, min = 0, max = 1) {
 function mix(from, to, amount) {
     return from + (to - from) * clamp(amount);
 }
-function backgroundOpacity(progress) {
-    if (progress < 0.35) return 1;
-    if (progress < 0.5) return mix(1, 0.94, (progress - 0.35) / 0.15);
-    if (progress < 0.7) return mix(0.94, 0.78, (progress - 0.5) / 0.2);
-    if (progress < 0.9) return mix(0.78, 0.38, (progress - 0.7) / 0.2);
-    return 0.28;
+// 背景の強度を、スクロール量（ビューポート高単位 vp）に対して滑らかに落とす。
+// Hero=100% → Bridge/Issue/Problem まで余韻を残し、Transformation以降で静かに引く。
+const STOPS = [
+    [
+        0,
+        1
+    ],
+    [
+        1.0,
+        0.82
+    ],
+    [
+        1.9,
+        0.6
+    ],
+    [
+        2.7,
+        0.4
+    ],
+    [
+        3.6,
+        0.2
+    ],
+    [
+        5.0,
+        0.12
+    ]
+];
+function backgroundIntensity(vp) {
+    if (vp <= STOPS[0][0]) return STOPS[0][1];
+    for(let i = 1; i < STOPS.length; i++){
+        if (vp <= STOPS[i][0]) {
+            const [v0, o0] = STOPS[i - 1];
+            const [v1, o1] = STOPS[i];
+            return mix(o0, o1, (vp - v0) / (v1 - v0));
+        }
+    }
+    return STOPS[STOPS.length - 1][1];
 }
 function FixedWebGLBackground() {
     const progress = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(0);
@@ -433,12 +465,14 @@ function FixedWebGLBackground() {
     }, []);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const onScroll = ()=>{
-            const p = clamp(window.scrollY / (window.innerHeight * 2.2));
+            const vp = window.scrollY / window.innerHeight;
+            // 3Dジャーニーは Hero〜Issue 付近で 0→1。急がず、スクロールに自然同期。
+            const p = clamp(vp / 2.4);
             const contact = document.getElementById('contact');
             const contactPresence = contact ? clamp(1 - Math.abs(contact.getBoundingClientRect().top) / window.innerHeight) : 0;
             progress.current = reduced ? p * 0.12 : p;
-            setOpacity(Math.max(backgroundOpacity(p), contactPresence * 0.56));
-            setVeil(clamp((p - 0.34) / 0.7));
+            setOpacity(Math.max(backgroundIntensity(vp), contactPresence * 0.5));
+            setVeil(clamp((vp - 0.8) / 2.4));
         };
         window.addEventListener('scroll', onScroll, {
             passive: true
@@ -462,42 +496,42 @@ function FixedWebGLBackground() {
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "h-full w-full transition-[filter] duration-500 ease-out",
                 style: {
-                    filter: `blur(${veil * 1.4}px) saturate(${1 + veil * 0.08}) brightness(${1 - veil * 0.08})`
+                    filter: `blur(${veil * 1.1}px) brightness(${1 - veil * 0.06})`
                 },
                 children: mounted && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(HeroScene, {
                     progress: progress,
                     reduced: reduced
                 }, void 0, false, {
                     fileName: "[project]/components/fixed-webgl-background.tsx",
-                    lineNumber: 79,
+                    lineNumber: 96,
                     columnNumber: 21
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/fixed-webgl-background.tsx",
-                lineNumber: 73,
+                lineNumber: 90,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "absolute inset-0 bg-gradient-to-b from-background/66 via-background/20 to-background/72 md:bg-gradient-to-r md:from-background/82 md:via-background/28 md:to-transparent"
+                className: "absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background/55 md:bg-gradient-to-r md:from-background/70 md:via-background/12 md:to-transparent"
             }, void 0, false, {
                 fileName: "[project]/components/fixed-webgl-background.tsx",
-                lineNumber: 81,
+                lineNumber: 99,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "absolute inset-0 bg-[radial-gradient(circle_at_70%_45%,rgba(255,255,255,0.14),transparent_42%),radial-gradient(circle_at_52%_38%,rgba(218,228,255,0.08),transparent_38%),linear-gradient(180deg,rgba(2,3,6,0)_0%,rgba(2,3,6,0.16)_48%,rgba(2,3,6,0.56)_100%)]",
+                className: "absolute inset-0 bg-[radial-gradient(circle_at_64%_42%,rgba(238,242,249,0.10),transparent_46%),linear-gradient(180deg,rgba(6,7,11,0)_0%,rgba(6,7,11,0.12)_55%,rgba(6,7,11,0.5)_100%)]",
                 style: {
-                    opacity: 0.16 + veil * 0.36
+                    opacity: 0.2 + veil * 0.3
                 }
             }, void 0, false, {
                 fileName: "[project]/components/fixed-webgl-background.tsx",
-                lineNumber: 82,
+                lineNumber: 101,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/fixed-webgl-background.tsx",
-        lineNumber: 68,
+        lineNumber: 85,
         columnNumber: 5
     }, this);
 }
@@ -521,7 +555,15 @@ function Hero() {
         "aria-label": "眺めるWebから、入り込むWebへ",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "mx-auto w-full max-w-7xl px-6 md:px-10",
+                "aria-hidden": true,
+                className: "pointer-events-none absolute inset-0 bg-gradient-to-b from-background/75 via-background/25 to-background/55 md:bg-gradient-to-r md:from-background/80 md:via-background/25 md:to-transparent"
+            }, void 0, false, {
+                fileName: "[project]/components/hero.tsx",
+                lineNumber: 13,
+                columnNumber: 7
+            }, this),
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "relative z-10 mx-auto w-full max-w-7xl px-6 md:px-10",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "max-w-2xl will-change-transform",
                     children: [
@@ -530,7 +572,7 @@ function Hero() {
                             children: "Experience-driven Web Design"
                         }, void 0, false, {
                             fileName: "[project]/components/hero.tsx",
-                            lineNumber: 14,
+                            lineNumber: 19,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
@@ -542,7 +584,7 @@ function Hero() {
                                 "眺めるWebから、",
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("br", {}, void 0, false, {
                                     fileName: "[project]/components/hero.tsx",
-                                    lineNumber: 22,
+                                    lineNumber: 27,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -550,14 +592,14 @@ function Hero() {
                                     children: "入り込む"
                                 }, void 0, false, {
                                     fileName: "[project]/components/hero.tsx",
-                                    lineNumber: 23,
+                                    lineNumber: 28,
                                     columnNumber: 13
                                 }, this),
                                 "Webへ。"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/hero.tsx",
-                            lineNumber: 17,
+                            lineNumber: 22,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -571,14 +613,14 @@ function Hero() {
                                     className: "hidden sm:block"
                                 }, void 0, false, {
                                     fileName: "[project]/components/hero.tsx",
-                                    lineNumber: 30,
+                                    lineNumber: 35,
                                     columnNumber: 13
                                 }, this),
                                 "体験型Webサイトを制作します。"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/hero.tsx",
-                            lineNumber: 25,
+                            lineNumber: 30,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -594,7 +636,7 @@ function Hero() {
                                     children: "体験デモを見る"
                                 }, void 0, false, {
                                     fileName: "[project]/components/hero.tsx",
-                                    lineNumber: 38,
+                                    lineNumber: 43,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("a", {
@@ -604,24 +646,24 @@ function Hero() {
                                     children: "見積もり相談する"
                                 }, void 0, false, {
                                     fileName: "[project]/components/hero.tsx",
-                                    lineNumber: 45,
+                                    lineNumber: 50,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/hero.tsx",
-                            lineNumber: 34,
+                            lineNumber: 39,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/hero.tsx",
-                    lineNumber: 13,
+                    lineNumber: 18,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/hero.tsx",
-                lineNumber: 12,
+                lineNumber: 17,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -631,7 +673,7 @@ function Hero() {
                         className: "h-px w-8 bg-foreground/30"
                     }, void 0, false, {
                         fileName: "[project]/components/hero.tsx",
-                        lineNumber: 57,
+                        lineNumber: 62,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -639,13 +681,13 @@ function Hero() {
                         children: "Scroll to enter"
                     }, void 0, false, {
                         fileName: "[project]/components/hero.tsx",
-                        lineNumber: 58,
+                        lineNumber: 63,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/hero.tsx",
-                lineNumber: 56,
+                lineNumber: 61,
                 columnNumber: 7
             }, this)
         ]
@@ -815,6 +857,14 @@ function Bridge({ id = 'meaning', progress = 1, overlay = false }) {
                 lineNumber: 24,
                 columnNumber: 9
             }, this),
+            overlay && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                "aria-hidden": true,
+                className: "pointer-events-none absolute inset-0 bg-gradient-to-r from-background/55 via-background/15 to-transparent"
+            }, void 0, false, {
+                fileName: "[project]/components/bridge.tsx",
+                lineNumber: 31,
+                columnNumber: 9
+            }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "relative z-10 mx-auto w-full max-w-6xl px-6 md:px-10",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -829,7 +879,7 @@ function Bridge({ id = 'meaning', progress = 1, overlay = false }) {
                             children: "02 — Meaning"
                         }, void 0, false, {
                             fileName: "[project]/components/bridge.tsx",
-                            lineNumber: 38,
+                            lineNumber: 45,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -840,14 +890,14 @@ function Bridge({ id = 'meaning', progress = 1, overlay = false }) {
                                     className: "hidden md:block"
                                 }, void 0, false, {
                                     fileName: "[project]/components/bridge.tsx",
-                                    lineNumber: 48,
+                                    lineNumber: 55,
                                     columnNumber: 13
                                 }, this),
                                 "ただの演出ではありません。"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/bridge.tsx",
-                            lineNumber: 41,
+                            lineNumber: 48,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -858,7 +908,7 @@ function Bridge({ id = 'meaning', progress = 1, overlay = false }) {
                                     className: "hidden sm:block"
                                 }, void 0, false, {
                                     fileName: "[project]/components/bridge.tsx",
-                                    lineNumber: 58,
+                                    lineNumber: 65,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -866,25 +916,25 @@ function Bridge({ id = 'meaning', progress = 1, overlay = false }) {
                                     children: "魅力の伝わり方そのもの"
                                 }, void 0, false, {
                                     fileName: "[project]/components/bridge.tsx",
-                                    lineNumber: 59,
+                                    lineNumber: 66,
                                     columnNumber: 13
                                 }, this),
                                 "を変える設計です。"
                             ]
                         }, void 0, true, {
                             fileName: "[project]/components/bridge.tsx",
-                            lineNumber: 51,
+                            lineNumber: 58,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/components/bridge.tsx",
-                    lineNumber: 31,
+                    lineNumber: 38,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/bridge.tsx",
-                lineNumber: 30,
+                lineNumber: 37,
                 columnNumber: 7
             }, this)
         ]

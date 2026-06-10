@@ -3,12 +3,8 @@
 "use strict";
 
 __turbopack_context__.s([
-    "AMBER",
-    ()=>AMBER,
     "BG",
     ()=>BG,
-    "BLOOM_AMBER",
-    ()=>BLOOM_AMBER,
     "BLOOM_INK",
     ()=>BLOOM_INK,
     "BLOOM_WARM",
@@ -30,141 +26,89 @@ __turbopack_context__.s([
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/.pnpm/three@0.184.0/node_modules/three/build/three.core.js [app-client] (ecmascript)");
 ;
-const BG = '#050608';
-const INK = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#d8dce5');
-const AMBER = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#f3f6fb');
-const WARM = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#f7f9ff');
-const BLOOM_INK = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#f2f6ff').multiplyScalar(1.95);
-const BLOOM_AMBER = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#ffffff').multiplyScalar(2.2);
-const BLOOM_WARM = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#ffffff').multiplyScalar(2.05);
-const CAM_START = 5.8;
-const CAM_END = -14.5;
-const OPENING_PHOTO_PRESENCE = 0.38;
+const BG = '#06070b';
+const INK = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#c9ced8');
+const WARM = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#eef2f9');
+const BLOOM_INK = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#eaf0ff').multiplyScalar(1.5);
+const BLOOM_WARM = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Color"]('#ffffff').multiplyScalar(1.7);
+const CAM_START = 5.0;
+const CAM_END = -4.5;
+const OPENING_PHOTO_PRESENCE = 0.5;
 const LAYERS = [
+    // 近景：飲食の手元・カウンター（メイン）
     {
         photo: '/jp/cafe.png',
-        label: '飲食 / Restaurant',
+        label: '',
         pos: [
-            2.0,
-            0.1,
-            -0.5
+            2.7,
+            -0.15,
+            -1.2
+        ],
+        rotY: -0.16,
+        rotX: 0.02,
+        h: 3.5,
+        ar: 1.5,
+        drift: 0.05,
+        sweep: [
+            1.6,
+            -0.3
+        ]
+    },
+    // 中景：サロンの空間
+    {
+        photo: '/jp/salon.png',
+        label: '',
+        pos: [
+            3.9,
+            1.5,
+            -4.2
+        ],
+        rotY: -0.22,
+        rotX: 0.0,
+        h: 2.7,
+        ar: 0.82,
+        drift: 0.06,
+        sweep: [
+            1.8,
+            0.6
+        ]
+    },
+    // 中景：町工場の手元・道具
+    {
+        photo: '/jp/craft.png',
+        label: '',
+        pos: [
+            3.1,
+            -1.5,
+            -6.4
         ],
         rotY: -0.18,
-        rotX: 0.02,
-        h: 3.2,
-        ar: 1.5,
-        drift: 0.1,
+        rotX: 0.03,
+        h: 2.5,
+        ar: 1.4,
+        drift: 0.07,
         sweep: [
-            3.6,
+            1.6,
             -0.6
         ]
     },
-    {
-        photo: '/jp/salon.png',
-        label: '美容 / Salon',
-        pos: [
-            4.6,
-            1.7,
-            -2.6
-        ],
-        rotY: -0.28,
-        rotX: 0.0,
-        h: 2.8,
-        ar: 0.78,
-        drift: 0.14,
-        sweep: [
-            4.2,
-            1.6
-        ]
-    },
-    {
-        photo: '/jp/craft.png',
-        label: 'ものづくり / Craft',
-        pos: [
-            -2.4,
-            -1.6,
-            -4.2
-        ],
-        rotY: 0.2,
-        rotX: 0.05,
-        h: 2.6,
-        ar: 1.4,
-        drift: 0.14,
-        sweep: [
-            -4.0,
-            -1.8
-        ]
-    },
+    // 遠景：落ち着いた空間
     {
         photo: '/jp/clinic.png',
-        label: '医療 / Clinic',
-        pos: [
-            3.6,
-            -0.6,
-            -6.4
-        ],
-        rotY: -0.26,
-        rotX: 0.0,
-        h: 2.6,
-        ar: 1.45,
-        drift: 0.16,
-        sweep: [
-            4.0,
-            -1.4
-        ]
-    },
-    {
-        photo: '/jp/store.png',
-        label: '店舗 / Store',
-        pos: [
-            -2.2,
-            1.8,
-            -8.4
-        ],
-        rotY: 0.14,
-        rotX: 0.02,
-        h: 2.5,
-        ar: 1.5,
-        drift: 0.18,
-        sweep: [
-            -3.8,
-            2.0
-        ]
-    },
-    {
-        photo: '/jp/farm.png',
-        label: '農業 / Agriculture',
+        label: '',
         pos: [
             2.4,
-            -1.0,
-            -10.6
+            0.7,
+            -9.6
         ],
         rotY: -0.16,
-        rotX: 0.03,
-        h: 2.4,
-        ar: 1.5,
-        drift: 0.2,
-        sweep: [
-            3.4,
-            -1.6
-        ]
-    },
-    {
-        photo: '/jp/personal.png',
-        label: '個人ブランド / Creator',
-        pos: [
-            -1.2,
-            0.6,
-            -12.8
-        ],
-        rotY: 0.1,
         rotX: 0.0,
-        h: 2.2,
-        ar: 1.3,
-        drift: 0.22,
+        h: 2.3,
+        ar: 1.45,
+        drift: 0.08,
         sweep: [
-            -3.0,
-            1.2
+            1.2,
+            0.4
         ]
     }
 ];
@@ -219,21 +163,23 @@ function PhotoLayer({ def, texture, progress, reduced }) {
             if (!g || !m) return;
             const camZ = camera.position.z;
             const ahead = camZ - def.pos[2];
-            const reveal = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(15, 9.5, ahead);
-            const opening = (1 - (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.04, 0.28, progress.current)) * (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(24, 12, ahead);
+            // 近づくほど霧から静かに立ち上がる。近景は最初から少しだけ見えている。
+            const reveal = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(13, 7.5, ahead);
+            const opening = (1 - (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.04, 0.3, progress.current)) * (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(20, 11, ahead);
             const presence = Math.max(reveal, opening * __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["OPENING_PHOTO_PRESENCE"]);
-            const pass = reduced ? 0 : (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(3.2, -0.6, ahead);
-            const passFade = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(-1.2, 1.6, ahead);
+            // カメラが到達したら静かに脇へ流して通り過ぎる（派手に飛ばさない）。
+            const pass = reduced ? 0 : (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(2.4, -0.8, ahead);
+            const passFade = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(-1.8, 1.4, ahead);
             const baseTex = texture ? 1 : 0;
-            m.opacity += (baseTex * presence * passFade - m.opacity) * Math.min(1, delta * 4);
+            m.opacity += (baseTex * presence * passFade - m.opacity) * Math.min(1, delta * 3);
             const t = state.clock.elapsedTime;
-            const fx = reduced ? 0 : Math.cos(t * 0.3 + phase) * def.drift * 0.5;
-            const fy = reduced ? 0 : Math.sin(t * 0.4 + phase) * def.drift;
-            const approach = (1 - presence) * -1.2;
+            const fx = reduced ? 0 : Math.cos(t * 0.24 + phase) * def.drift * 0.5;
+            const fy = reduced ? 0 : Math.sin(t * 0.3 + phase) * def.drift;
+            const approach = (1 - presence) * -0.8;
             g.position.x = def.pos[0] + def.sweep[0] * pass + fx;
             g.position.y = def.pos[1] + def.sweep[1] * pass + fy;
             g.position.z = def.pos[2] + approach;
-            g.rotation.y = def.rotY - def.sweep[0] * 0.04 * pass;
+            g.rotation.y = def.rotY - def.sweep[0] * 0.03 * pass;
             g.rotation.x = def.rotX;
         }
     }["PhotoLayer.useFrame"]);
@@ -259,7 +205,7 @@ function PhotoLayer({ def, texture, progress, reduced }) {
                     ]
                 }, void 0, false, {
                     fileName: "[project]/components/hero-scene/parts.tsx",
-                    lineNumber: 66,
+                    lineNumber: 69,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("meshBasicMaterial", {
@@ -268,21 +214,22 @@ function PhotoLayer({ def, texture, progress, reduced }) {
                     transparent: true,
                     opacity: 0,
                     toneMapped: false,
-                    side: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DoubleSide"]
+                    side: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["DoubleSide"],
+                    depthWrite: false
                 }, void 0, false, {
                     fileName: "[project]/components/hero-scene/parts.tsx",
-                    lineNumber: 67,
+                    lineNumber: 70,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/components/hero-scene/parts.tsx",
-            lineNumber: 65,
+            lineNumber: 68,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/components/hero-scene/parts.tsx",
-        lineNumber: 64,
+        lineNumber: 67,
         columnNumber: 5
     }, this);
 }
@@ -297,7 +244,7 @@ function Motes({ progress, glow, reduced }) {
     _s1();
     const ref = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const bloom = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
-    const count = 260;
+    const count = 56;
     const dummy = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"])({
         "Motes.useMemo[dummy]": ()=>new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Object3D"]()
     }["Motes.useMemo[dummy]"], []);
@@ -309,13 +256,12 @@ function Motes({ progress, glow, reduced }) {
             const arr = [];
             for(let i = 0; i < count; i++){
                 arr.push({
-                    x: (Math.random() - 0.5) * 18,
-                    y: (Math.random() - 0.5) * 11,
-                    z: __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] - Math.random() * 32,
-                    s: 0.018 + Math.random() * 0.055,
-                    speed: 0.65 + Math.random() * 1.35,
-                    phase: Math.random() * Math.PI * 2,
-                    amber: Math.random() < 0.28
+                    x: (Math.random() - 0.5) * 8,
+                    y: (Math.random() - 0.5) * 5,
+                    z: __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] - Math.random() * 28,
+                    s: 0.016 + Math.random() * 0.03,
+                    speed: 0.5 + Math.random() * 0.8,
+                    phase: Math.random() * Math.PI * 2
                 });
             }
             return arr;
@@ -334,10 +280,10 @@ function Motes({ progress, glow, reduced }) {
                     dummy.updateMatrix();
                     mesh.setMatrixAt(i, dummy.matrix);
                     glowDummy.position.set(d.x, d.y, d.z);
-                    glowDummy.scale.setScalar(d.s * 2.8);
+                    glowDummy.scale.setScalar(d.s * 2.4);
                     glowDummy.updateMatrix();
                     glowMesh.setMatrixAt(i, glowDummy.matrix);
-                    col.copy(d.amber ? __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["BLOOM_AMBER"] : __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["BLOOM_INK"]);
+                    col.copy(__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["BLOOM_INK"]);
                     mesh.setColorAt(i, col);
                     glowMesh.setColorAt(i, col);
                 }
@@ -358,39 +304,33 @@ function Motes({ progress, glow, reduced }) {
             const glowMesh = bloom.current;
             if (!mesh || !glowMesh) return;
             const camZ = state.camera.position.z;
-            const farZ = camZ - 34;
-            const nearZ = camZ + 2.8;
-            const stream = reduced ? 0.35 : 1.2 + progress.current * 4.2;
-            let changed = false;
+            const farZ = camZ - 30;
+            const nearZ = camZ + 2.4;
+            const stream = reduced ? 0.2 : 0.6 + progress.current * 1.8;
             data.forEach({
                 "Motes.useFrame": (d, i)=>{
                     d.z += delta * stream * d.speed;
                     if (d.z > nearZ) {
-                        d.z = farZ - Math.random() * 8;
-                        d.x = (Math.random() - 0.5) * 18;
-                        d.y = (Math.random() - 0.5) * 11;
-                        d.s = 0.018 + Math.random() * 0.055;
-                        d.speed = 0.65 + Math.random() * 1.35;
-                        changed = true;
+                        d.z = farZ - Math.random() * 6;
+                        d.x = (Math.random() - 0.5) * 8;
+                        d.y = (Math.random() - 0.5) * 5;
                     }
                     const depth = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MathUtils"].clamp((d.z - farZ) / (nearZ - farZ), 0, 1);
                     const t = state.clock.elapsedTime;
-                    const drift = reduced ? 0 : Math.sin(t * 0.5 + d.phase) * 0.08;
-                    dummy.position.set(d.x + drift * depth, d.y - drift * 0.55 * depth, d.z);
-                    const scale = d.s * (0.45 + depth * 2.65);
+                    const drift = reduced ? 0 : Math.sin(t * 0.4 + d.phase) * 0.05;
+                    dummy.position.set(d.x + drift * depth, d.y - drift * 0.5 * depth, d.z);
+                    const scale = d.s * (0.4 + depth * 2.0);
                     dummy.scale.setScalar(scale);
                     dummy.updateMatrix();
                     mesh.setMatrixAt(i, dummy.matrix);
                     glowDummy.position.copy(dummy.position);
-                    glowDummy.scale.setScalar(scale * (2.8 + depth * 2.6));
+                    glowDummy.scale.setScalar(scale * (2.2 + depth * 2.0));
                     glowDummy.updateMatrix();
                     glowMesh.setMatrixAt(i, glowDummy.matrix);
                 }
             }["Motes.useFrame"]);
             mesh.instanceMatrix.needsUpdate = true;
             glowMesh.instanceMatrix.needsUpdate = true;
-            if (changed && mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-            if (changed && glowMesh.instanceColor) glowMesh.instanceColor.needsUpdate = true;
         }
     }["Motes.useFrame"]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
@@ -410,25 +350,25 @@ function Motes({ progress, glow, reduced }) {
                         ]
                     }, void 0, false, {
                         fileName: "[project]/components/hero-scene/parts.tsx",
-                        lineNumber: 185,
+                        lineNumber: 182,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("meshBasicMaterial", {
                         map: glow,
                         transparent: true,
-                        opacity: 0.82,
+                        opacity: 0.34,
                         depthWrite: false,
                         blending: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AdditiveBlending"],
                         toneMapped: false
                     }, void 0, false, {
                         fileName: "[project]/components/hero-scene/parts.tsx",
-                        lineNumber: 186,
+                        lineNumber: 183,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/hero-scene/parts.tsx",
-                lineNumber: 184,
+                lineNumber: 181,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("instancedMesh", {
@@ -446,24 +386,24 @@ function Motes({ progress, glow, reduced }) {
                         ]
                     }, void 0, false, {
                         fileName: "[project]/components/hero-scene/parts.tsx",
-                        lineNumber: 196,
+                        lineNumber: 193,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("meshBasicMaterial", {
                         transparent: true,
-                        opacity: 0.95,
+                        opacity: 0.55,
                         depthWrite: false,
                         blending: __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["AdditiveBlending"],
                         toneMapped: false
                     }, void 0, false, {
                         fileName: "[project]/components/hero-scene/parts.tsx",
-                        lineNumber: 197,
+                        lineNumber: 194,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/components/hero-scene/parts.tsx",
-                lineNumber: 195,
+                lineNumber: 192,
                 columnNumber: 7
             }, this)
         ]
@@ -481,27 +421,27 @@ function CloudField({ texture, progress, reduced }) {
     const clouds = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"])({
         "CloudField.useMemo[clouds]": ()=>{
             return Array.from({
-                length: 9
+                length: 3
             }, {
                 "CloudField.useMemo[clouds]": ()=>({
-                        x: -14 + Math.random() * 28,
-                        y: -4.2 + Math.random() * 8.4,
-                        z: __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] - 10 - Math.random() * 30,
-                        speed: 0.018 + Math.random() * 0.036,
-                        stream: 0.22 + Math.random() * 0.46,
+                        x: -10 + Math.random() * 20,
+                        y: -3 + Math.random() * 6,
+                        z: __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] - 14 - Math.random() * 22,
+                        speed: 0.012 + Math.random() * 0.022,
+                        stream: 0.14 + Math.random() * 0.3,
                         phase: Math.random() * Math.PI * 2,
                         layers: Array.from({
-                            length: 7 + Math.round(Math.random() * 9)
+                            length: 5 + Math.round(Math.random() * 4)
                         }, {
                             "CloudField.useMemo[clouds]": ()=>({
-                                    x: (Math.random() - 0.5) * 4.8,
-                                    y: (Math.random() - 0.5) * 2.4,
-                                    z: (Math.random() - 0.5) * 3.2,
-                                    scale: 1.8 + Math.random() * 3.2,
-                                    aspect: 1.65 + Math.random() * 1.4,
+                                    x: (Math.random() - 0.5) * 4.4,
+                                    y: (Math.random() - 0.5) * 2.2,
+                                    z: (Math.random() - 0.5) * 3,
+                                    scale: 1.8 + Math.random() * 3,
+                                    aspect: 1.6 + Math.random() * 1.3,
                                     angle: Math.random() * Math.PI * 2,
-                                    spin: (0.018 + Math.random() * 0.06) * (Math.random() > 0.5 ? 1 : -1),
-                                    opacity: 0.09 + Math.random() * 0.14
+                                    spin: (0.012 + Math.random() * 0.04) * (Math.random() > 0.5 ? 1 : -1),
+                                    opacity: 0.04 + Math.random() * 0.06
                                 })
                         }["CloudField.useMemo[clouds]"])
                     })
@@ -513,29 +453,29 @@ function CloudField({ texture, progress, reduced }) {
             const g = group.current;
             if (!g) return;
             const time = clock.elapsedTime;
-            const farZ = camera.position.z - 42;
-            const nearZ = camera.position.z + 5;
+            const farZ = camera.position.z - 40;
+            const nearZ = camera.position.z + 4;
             g.children.forEach({
                 "CloudField.useFrame": (child, i)=>{
                     const cloud = clouds[i];
                     const cluster = child;
                     const driftSpeed = reduced ? cloud.speed * 0.28 : cloud.speed;
-                    const streamSpeed = reduced ? cloud.stream * 0.2 : cloud.stream * (0.8 + progress.current * 1.4);
+                    const streamSpeed = reduced ? cloud.stream * 0.2 : cloud.stream * (0.8 + progress.current * 1.1);
                     cluster.position.x += delta * driftSpeed;
                     cluster.position.z += delta * streamSpeed;
-                    if (cluster.position.x > 14) {
-                        cluster.position.x = -14 - Math.random() * 5;
-                        cluster.position.y = -4.2 + Math.random() * 8.4;
+                    if (cluster.position.x > 12) {
+                        cluster.position.x = -12 - Math.random() * 4;
+                        cluster.position.y = -3 + Math.random() * 6;
                     }
                     if (cluster.position.z > nearZ) {
-                        cluster.position.x = -14 + Math.random() * 28;
-                        cluster.position.y = -4.2 + Math.random() * 8.4;
-                        cluster.position.z = farZ - Math.random() * 12;
+                        cluster.position.x = -10 + Math.random() * 20;
+                        cluster.position.y = -3 + Math.random() * 6;
+                        cluster.position.z = farZ - Math.random() * 10;
                     }
-                    cluster.position.y = cloud.y + Math.sin(time * 0.08 + cloud.phase) * 0.42;
-                    cluster.rotation.y = Math.sin(time * 0.035 + cloud.phase) * 0.08;
+                    cluster.position.y = cloud.y + Math.sin(time * 0.07 + cloud.phase) * 0.34;
+                    cluster.rotation.y = Math.sin(time * 0.03 + cloud.phase) * 0.06;
                     const depth = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["MathUtils"].clamp((cluster.position.z - farZ) / (nearZ - farZ), 0, 1);
-                    const depthFade = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.02, 0.24, depth) * (1 - (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.82, 1, depth));
+                    const depthFade = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.04, 0.26, depth) * (1 - (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.8, 1, depth));
                     cluster.children.forEach({
                         "CloudField.useFrame": (layerChild, j)=>{
                             const layer = cloud.layers[j];
@@ -543,7 +483,7 @@ function CloudField({ texture, progress, reduced }) {
                             const mat = mesh.material;
                             mesh.quaternion.copy(camera.quaternion);
                             mesh.rotateZ(layer.angle + time * (reduced ? layer.spin * 0.2 : layer.spin));
-                            mat.opacity = layer.opacity * depthFade * (0.82 + Math.sin(time * 0.13 + cloud.phase + j) * 0.18);
+                            mat.opacity = layer.opacity * depthFade * (0.82 + Math.sin(time * 0.12 + cloud.phase + j) * 0.18);
                         }
                     }["CloudField.useFrame"]);
                 }
@@ -582,7 +522,7 @@ function CloudField({ texture, progress, reduced }) {
                                 ]
                             }, void 0, false, {
                                 fileName: "[project]/components/hero-scene/parts.tsx",
-                                lineNumber: 295,
+                                lineNumber: 293,
                                 columnNumber: 15
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("meshBasicMaterial", {
@@ -595,23 +535,23 @@ function CloudField({ texture, progress, reduced }) {
                                 toneMapped: false
                             }, void 0, false, {
                                 fileName: "[project]/components/hero-scene/parts.tsx",
-                                lineNumber: 296,
+                                lineNumber: 294,
                                 columnNumber: 15
                             }, this)
                         ]
                     }, j, true, {
                         fileName: "[project]/components/hero-scene/parts.tsx",
-                        lineNumber: 289,
+                        lineNumber: 287,
                         columnNumber: 13
                     }, this))
             }, i, false, {
                 fileName: "[project]/components/hero-scene/parts.tsx",
-                lineNumber: 287,
+                lineNumber: 285,
                 columnNumber: 9
             }, this))
     }, void 0, false, {
         fileName: "[project]/components/hero-scene/parts.tsx",
-        lineNumber: 285,
+        lineNumber: 283,
         columnNumber: 5
     }, this);
 }
@@ -648,21 +588,22 @@ function Rig({ progress, reduced }) {
     }["Rig.useEffect"], []);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f40$react$2d$three$2b$fiber$40$9$2e$6$2e$1_$40$types$2b$react$40$19$2e$2$2e$14_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4_three$40$0$2e$184$2e$0$2f$node_modules$2f40$react$2d$three$2f$fiber$2f$dist$2f$events$2d$b389eeca$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__D__as__useFrame$3e$__["useFrame"])({
         "Rig.useFrame": (state, delta)=>{
-            const k = Math.min(1, delta * 3);
+            const k = Math.min(1, delta * 2.2);
             const p = progress.current;
             const t = state.clock.elapsedTime;
-            const autoX = Math.sin(t * 0.18) * 0.12;
-            const autoY = Math.cos(t * 0.15) * 0.08;
+            const autoX = Math.sin(t * 0.16) * 0.08;
+            const autoY = Math.cos(t * 0.13) * 0.05;
             mouse.current.x += (target.current.x + autoX - mouse.current.x) * k;
             mouse.current.y += (target.current.y + autoY - mouse.current.y) * k;
-            const z = reduced ? __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] - p * 2.5 : __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] + (__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_END"] - __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"]) * p;
+            const z = reduced ? __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] - p * 1.5 : __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"] + (__TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_END"] - __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CAM_START"]) * p;
             camera.position.z += (z - camera.position.z) * k;
-            const sway = reduced ? 0.25 : 1;
-            const baseX = 0.6;
-            camera.position.x += (baseX + mouse.current.x * 0.7 * sway - camera.position.x) * k;
-            camera.position.y += (-mouse.current.y * 0.45 * sway - camera.position.y) * k;
-            camera.rotation.y += (-mouse.current.x * 0.05 - camera.rotation.y) * k;
-            camera.rotation.x += (mouse.current.y * 0.03 - camera.rotation.x) * k;
+            // 右にわずかに寄せ、左のコピー領域を常に空ける。視差は控えめ。
+            const sway = reduced ? 0.2 : 1;
+            const baseX = 0.4;
+            camera.position.x += (baseX + mouse.current.x * 0.4 * sway - camera.position.x) * k;
+            camera.position.y += (-mouse.current.y * 0.28 * sway - camera.position.y) * k;
+            camera.rotation.y += (-mouse.current.x * 0.03 - camera.rotation.y) * k;
+            camera.rotation.x += (mouse.current.y * 0.02 - camera.rotation.x) * k;
         }
     }["Rig.useFrame"]);
     return null;
@@ -681,105 +622,57 @@ function Atmosphere({ progress, glow }) {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f40$react$2d$three$2b$fiber$40$9$2e$6$2e$1_$40$types$2b$react$40$19$2e$2$2e$14_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4_three$40$0$2e$184$2e$0$2f$node_modules$2f40$react$2d$three$2f$fiber$2f$dist$2f$events$2d$b389eeca$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__D__as__useFrame$3e$__["useFrame"])({
         "Atmosphere.useFrame": ({ camera })=>{
             const p = progress.current;
-            if (warmMat.current) warmMat.current.opacity = 0.3 + (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.5, 1, p) * 0.55;
+            if (warmMat.current) warmMat.current.opacity = 0.2 + (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["smoothstep"])(0.45, 1, p) * 0.4;
             if (warm.current) {
-                warm.current.position.z = Math.min(-13, camera.position.z - 4);
+                warm.current.position.z = Math.min(-12, camera.position.z - 5);
             }
         }
     }["Atmosphere.useFrame"]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("group", {
-        children: [
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("group", {
-                ref: warm,
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("mesh", {
-                    position: [
+        ref: warm,
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("mesh", {
+            position: [
+                0.6,
+                0.2,
+                0
+            ],
+            scale: [
+                34,
+                24,
+                1
+            ],
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("planeGeometry", {
+                    args: [
                         1,
-                        0.3,
-                        0
-                    ],
-                    scale: [
-                        42,
-                        30,
                         1
-                    ],
-                    children: [
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("planeGeometry", {
-                            args: [
-                                1,
-                                1
-                            ]
-                        }, void 0, false, {
-                            fileName: "[project]/components/hero-scene/parts.tsx",
-                            lineNumber: 370,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("meshBasicMaterial", {
-                            ref: warmMat,
-                            map: glow,
-                            transparent: true,
-                            depthWrite: false,
-                            color: __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["BLOOM_WARM"],
-                            toneMapped: false
-                        }, void 0, false, {
-                            fileName: "[project]/components/hero-scene/parts.tsx",
-                            lineNumber: 371,
-                            columnNumber: 11
-                        }, this)
                     ]
-                }, void 0, true, {
+                }, void 0, false, {
                     fileName: "[project]/components/hero-scene/parts.tsx",
-                    lineNumber: 369,
+                    lineNumber: 370,
+                    columnNumber: 9
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("meshBasicMaterial", {
+                    ref: warmMat,
+                    map: glow,
+                    transparent: true,
+                    depthWrite: false,
+                    color: __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["BLOOM_WARM"],
+                    toneMapped: false
+                }, void 0, false, {
+                    fileName: "[project]/components/hero-scene/parts.tsx",
+                    lineNumber: 371,
                     columnNumber: 9
                 }, this)
-            }, void 0, false, {
-                fileName: "[project]/components/hero-scene/parts.tsx",
-                lineNumber: 368,
-                columnNumber: 7
-            }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("mesh", {
-                position: [
-                    -6,
-                    3,
-                    -9
-                ],
-                scale: [
-                    16,
-                    14,
-                    1
-                ],
-                children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("planeGeometry", {
-                        args: [
-                            1,
-                            1
-                        ]
-                    }, void 0, false, {
-                        fileName: "[project]/components/hero-scene/parts.tsx",
-                        lineNumber: 382,
-                        columnNumber: 9
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("meshBasicMaterial", {
-                        map: glow,
-                        transparent: true,
-                        opacity: 0.18,
-                        depthWrite: false,
-                        color: __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["BLOOM_AMBER"],
-                        toneMapped: false
-                    }, void 0, false, {
-                        fileName: "[project]/components/hero-scene/parts.tsx",
-                        lineNumber: 383,
-                        columnNumber: 9
-                    }, this)
-                ]
-            }, void 0, true, {
-                fileName: "[project]/components/hero-scene/parts.tsx",
-                lineNumber: 381,
-                columnNumber: 7
-            }, this)
-        ]
-    }, void 0, true, {
+            ]
+        }, void 0, true, {
+            fileName: "[project]/components/hero-scene/parts.tsx",
+            lineNumber: 369,
+            columnNumber: 7
+        }, this)
+    }, void 0, false, {
         fileName: "[project]/components/hero-scene/parts.tsx",
-        lineNumber: 367,
+        lineNumber: 368,
         columnNumber: 5
     }, this);
 }
@@ -821,16 +714,17 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
 }
-function makePhotoTexture(img, label, ar) {
+function makePhotoTexture(img, ar) {
     const H = 768;
     const W = Math.round(H * ar);
     const c = document.createElement('canvas');
     c.width = W;
     c.height = H;
     const ctx = c.getContext('2d');
-    const r = 26;
+    // 角丸は弱める。カードらしさを消す。
+    const r = 10;
     ctx.save();
-    roundRect(ctx, 6, 6, W - 12, H - 12, r);
+    roundRect(ctx, 4, 4, W - 8, H - 8, r);
     ctx.clip();
     if (img) {
         const ir = img.width / img.height;
@@ -850,25 +744,23 @@ function makePhotoTexture(img, label, ar) {
         }
         ctx.drawImage(img, dx, dy, dw, dh);
     } else {
-        ctx.fillStyle = '#1c2233';
+        ctx.fillStyle = '#0c0f15';
         ctx.fillRect(0, 0, W, H);
     }
-    const g = ctx.createLinearGradient(0, H * 0.5, 0, H);
-    g.addColorStop(0, 'rgba(12,15,24,0)');
-    g.addColorStop(1, 'rgba(12,15,24,0.62)');
+    // 端を暗く溶かして「カード」ではなく空間の窓 / 記憶の断片に見せる。
+    const edge = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.26, W / 2, H / 2, Math.max(W, H) * 0.62);
+    edge.addColorStop(0, 'rgba(6,7,11,0)');
+    edge.addColorStop(0.7, 'rgba(6,7,11,0.32)');
+    edge.addColorStop(1, 'rgba(6,7,11,0.92)');
+    ctx.fillStyle = edge;
+    ctx.fillRect(0, 0, W, H);
+    // ごく薄い下方向の沈み（奥行きの余韻）。ラベル・枠は持たない。
+    const g = ctx.createLinearGradient(0, H * 0.55, 0, H);
+    g.addColorStop(0, 'rgba(6,7,11,0)');
+    g.addColorStop(1, 'rgba(6,7,11,0.4)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#e6b066';
-    ctx.fillRect(40, H - 86, 34, 3);
-    ctx.fillStyle = 'rgba(247,243,236,0.92)';
-    ctx.font = '500 30px ui-sans-serif, system-ui, sans-serif';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(label, 40, H - 50);
     ctx.restore();
-    roundRect(ctx, 6, 6, W - 12, H - 12, r);
-    ctx.strokeStyle = 'rgba(243,221,180,0.16)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
     const tex = new __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["CanvasTexture"](c);
     tex.anisotropy = 8;
     tex.colorSpace = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$three$40$0$2e$184$2e$0$2f$node_modules$2f$three$2f$build$2f$three$2e$core$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["SRGBColorSpace"];
@@ -963,7 +855,7 @@ function HeroSceneScene({ progress, reduced }) {
                     const build = {
                         "HeroSceneScene.useEffect.build": (image)=>{
                             if (!alive) return;
-                            const tex = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$textures$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["makePhotoTexture"])(image, def.label, def.ar);
+                            const tex = (0, __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$textures$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["makePhotoTexture"])(image, def.ar);
                             made.push(tex);
                             setTextures({
                                 "HeroSceneScene.useEffect.build": (prev)=>({
@@ -1018,8 +910,8 @@ function HeroSceneScene({ progress, reduced }) {
                 attach: "fog",
                 args: [
                     __TURBOPACK__imported__module__$5b$project$5d2f$components$2f$hero$2d$scene$2f$constants$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["BG"],
-                    6,
-                    22
+                    7,
+                    26
                 ]
             }, void 0, false, {
                 fileName: "[project]/components/hero-scene/scene.tsx",
@@ -1128,9 +1020,9 @@ function HeroScene({ progress, reduced = false }) {
             }, this),
             !reduced && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f40$react$2d$three$2b$postprocessing$40$3$2e$0$2e$4_$40$react$2d$three$2b$fiber$40$9$2e$6$2e$1_$40$types$2b$react$40$19$2e$2$2e$14_react$2d$d_7ce6cef6ad2682a314cd1f0e8a4cedcf$2f$node_modules$2f40$react$2d$three$2f$postprocessing$2f$dist$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["EffectComposer"], {
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f40$react$2d$three$2b$postprocessing$40$3$2e$0$2e$4_$40$react$2d$three$2b$fiber$40$9$2e$6$2e$1_$40$types$2b$react$40$19$2e$2$2e$14_react$2d$d_7ce6cef6ad2682a314cd1f0e8a4cedcf$2f$node_modules$2f40$react$2d$three$2f$postprocessing$2f$dist$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Bloom"], {
-                    intensity: 0.95,
-                    luminanceThreshold: 0.22,
-                    luminanceSmoothing: 0.36,
+                    intensity: 0.55,
+                    luminanceThreshold: 0.34,
+                    luminanceSmoothing: 0.5,
                     mipmapBlur: true
                 }, void 0, false, {
                     fileName: "[project]/components/hero-scene.tsx",

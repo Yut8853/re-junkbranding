@@ -26,6 +26,13 @@ export function Bridge({ id = 'meaning', progress = 1, overlay = false }: Bridge
           className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/0 via-background/0 to-background"
         />
       )}
+      {/* オーバーレイ時：背景の上に置く半透明パネル。影で途中で切れないよう全面の柔らかいスクリムにする。 */}
+      {overlay && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/55 via-background/15 to-transparent"
+        />
+      )}
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-6 md:px-10">
         <div
