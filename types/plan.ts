@@ -1,1 +1,0 @@
-export type Tier = 'light' | 'standard' | 'premium'

@@ -1,0 +1,27 @@
+---
+import '../styles/global.scss';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'JUNK BRANDING — 眺めるWebから、入り込むWebへ。',
+  description = '世界観まで伝わる、体験型Webサイトを制作します。普通のHPでは伝わらない空気感を、体験として伝えるWebサイト制作。',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#06070b" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

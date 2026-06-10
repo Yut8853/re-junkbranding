@@ -1,0 +1,59 @@
+---
+---
+
+<section class="section meaning">
+  <div class="section__inner meaning__inner">
+    <p class="meaning__label" data-reveal>Meaning</p>
+
+    <h2 class="meaning__lead" data-reveal data-reveal-delay="0.05">
+      これは、ただの演出ではありません。
+    </h2>
+
+    <p class="meaning__body" data-reveal data-reveal-delay="0.12">
+      見る人の操作に反応しながら、<br />
+      魅力の伝わり方そのものを変える設計です。
+    </p>
+  </div>
+</section>
+
+<style lang="scss">
+  .meaning {
+    background:
+      radial-gradient(
+        120% 80% at 50% 0%,
+        rgba(244, 220, 187, 0.05) 0%,
+        rgba(6, 7, 11, 0) 60%
+      ),
+      var(--bg);
+    border-top: 1px solid var(--line);
+  }
+
+  .meaning__inner {
+    max-width: 56ch;
+  }
+
+  .meaning__label {
+    margin: 0 0 1.8rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--warm);
+    opacity: 0.8;
+  }
+
+  .meaning__lead {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: clamp(1.7rem, 4.2vw, 2.8rem);
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    color: #fff;
+  }
+
+  .meaning__body {
+    margin-top: 1.8rem;
+    font-size: clamp(1rem, 1.7vw, 1.2rem);
+    line-height: 2.1;
+    color: var(--ink-dim);
+  }
+</style>

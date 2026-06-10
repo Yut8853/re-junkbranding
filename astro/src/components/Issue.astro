@@ -1,0 +1,53 @@
+---
+---
+
+<section class="section issue">
+  <div class="section__inner issue__inner">
+    <p class="issue__label" data-reveal>Issue</p>
+
+    <h2 class="issue__lead" data-reveal data-reveal-delay="0.05">
+      いいお店なのに、<br />
+      それが画面では伝わらない。
+    </h2>
+
+    <p class="issue__body" data-reveal data-reveal-delay="0.12">
+      写真と文章を並べても、<br />
+      いちばん伝えたい空気感は、こぼれ落ちてしまう。
+    </p>
+  </div>
+</section>
+
+<style lang="scss">
+  .issue {
+    background: var(--bg-soft);
+    border-top: 1px solid var(--line);
+  }
+
+  .issue__inner {
+    max-width: 56ch;
+  }
+
+  .issue__label {
+    margin: 0 0 1.8rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .issue__lead {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: clamp(1.7rem, 4.2vw, 2.8rem);
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    color: #fff;
+  }
+
+  .issue__body {
+    margin-top: 1.8rem;
+    font-size: clamp(1rem, 1.7vw, 1.2rem);
+    line-height: 2.1;
+    color: var(--ink-dim);
+  }
+</style>

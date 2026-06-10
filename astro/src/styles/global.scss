@@ -1,0 +1,83 @@
+:root {
+  /* base palette — deep, refined, near-black */
+  --bg: #06070b;
+  --bg-soft: #0a0c12;
+  --ink: #eef1f7;
+  --ink-dim: #9aa2b1;
+  --ink-faint: #5d6675;
+  --line: rgba(255, 255, 255, 0.08);
+  --warm: #f4dcbb;
+
+  /* layout */
+  --maxw: 1180px;
+  --gutter: clamp(1.25rem, 5vw, 4rem);
+
+  /* type */
+  --font-sans: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Shippori Mincho",
+    serif;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "palt" 1;
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+main {
+  display: block;
+}
+
+::selection {
+  background: rgba(244, 220, 187, 0.22);
+  color: #fff;
+}
+
+/* Shared section rhythm */
+.section {
+  position: relative;
+  padding-block: clamp(7rem, 16vh, 12rem);
+  padding-inline: var(--gutter);
+}
+
+.section__inner {
+  max-width: var(--maxw);
+  margin-inline: auto;
+}
