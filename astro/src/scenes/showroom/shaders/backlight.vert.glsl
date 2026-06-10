@@ -1,4 +1,4 @@
-// Aperture — the luminous opening where the brand world rises.
+// The far light — the opening at the end of the showroom.
 varying vec2 vUv;
 
 void main() {

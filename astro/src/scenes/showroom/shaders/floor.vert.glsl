@@ -1,4 +1,4 @@
-// Room surface (floor / walls / ceiling) — lit by a single distant aperture.
+// Showroom floor — receding gallery path.
 varying vec2 vUv;
 varying vec3 vWorld;
 

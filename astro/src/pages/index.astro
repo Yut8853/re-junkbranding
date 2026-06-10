@@ -1,17 +1,43 @@
 ---
 import Base from '../layouts/Base.astro';
+import ShowroomCanvas from '../scenes/showroom/ShowroomCanvas';
 import Hero from '../components/Hero.astro';
 import Meaning from '../components/Meaning.astro';
 import Issue from '../components/Issue.astro';
 ---
 
 <Base>
-  <main>
+  <!-- The Digital Showroom: one persistent 3D space behind the whole page. -->
+  <div class="showroom-bg" aria-hidden="true">
+    <ShowroomCanvas client:load />
+  </div>
+
+  <main class="page">
     <Hero />
     <Meaning />
     <Issue />
   </main>
 </Base>
+
+<style is:global>
+  .showroom-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .showroom-bg .showroom-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+  }
+</style>
 
 <script>
   import { gsap } from 'gsap';

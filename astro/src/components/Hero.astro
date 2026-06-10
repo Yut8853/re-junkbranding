@@ -1,13 +1,8 @@
 ---
-import HeroCanvas from '../scenes/hero/HeroCanvas';
 ---
 
 <section class="hero" data-hero>
-  <div class="hero__canvas">
-    <HeroCanvas client:load />
-  </div>
-
-  <!-- Left scrim keeps the copy fully readable over the 3D world. -->
+  <!-- Left scrim keeps the copy fully readable over the 3D showroom. -->
   <div class="hero__scrim" aria-hidden="true"></div>
 
   <div class="hero__inner">
@@ -39,18 +34,6 @@ import HeroCanvas from '../scenes/hero/HeroCanvas';
     overflow: hidden;
   }
 
-  .hero__canvas {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-
-    :global(.hero-canvas) {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-  }
-
   .hero__scrim {
     position: absolute;
     inset: 0;
@@ -59,15 +42,15 @@ import HeroCanvas from '../scenes/hero/HeroCanvas';
     background:
       linear-gradient(
         100deg,
-        rgba(6, 7, 11, 0.92) 0%,
-        rgba(6, 7, 11, 0.7) 26%,
-        rgba(6, 7, 11, 0.25) 52%,
-        rgba(6, 7, 11, 0) 78%
+        rgba(5, 6, 10, 0.9) 0%,
+        rgba(5, 6, 10, 0.62) 26%,
+        rgba(5, 6, 10, 0.16) 52%,
+        rgba(5, 6, 10, 0) 78%
       ),
       linear-gradient(
         to top,
-        rgba(6, 7, 11, 0.85) 0%,
-        rgba(6, 7, 11, 0) 38%
+        rgba(5, 6, 10, 0.8) 0%,
+        rgba(5, 6, 10, 0) 38%
       );
   }
 
