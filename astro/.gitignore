@@ -1,20 +1,7 @@
-# build output
-dist/
-.output/
-
-# dependencies
-node_modules/
-
-# astro
-.astro/
-
-# environment
-.env
-.env.production
-
 # macOS
 .DS_Store
 
-# logs
-npm-debug.log*
-pnpm-debug.log*
+# Next.js leftovers (project migrated to ./astro)
+.next/
+
+# dependencies / build output live inside ./astro
