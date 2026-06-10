@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@theme inline {
+  --font-sans: var(--font-noto-sans), 'Geist Fallback';
+  --font-serif: var(--font-noto-serif), Georgia, serif;
+  --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
+  --color-ring: var(--ring);
+  --color-border: var(--border);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --font-noto-sans: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', system-ui, sans-serif;
+  --font-noto-serif: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', Georgia, serif;
+  --font-geist-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  /* Quiet, premium palette: warm cream base, deep charcoal ink, one warm amber accent */
+  --background: oklch(0.985 0.005 95);
+  --foreground: oklch(0.205 0.01 60);
+  --card: oklch(0.995 0.004 95);
+  --secondary: oklch(0.955 0.008 90);
+  --muted-foreground: oklch(0.52 0.015 70);
+  --accent: oklch(0.7 0.13 55);
+  --accent-foreground: oklch(0.985 0.005 95);
+  --border: oklch(0.9 0.008 85);
+  --ring: oklch(0.7 0.13 55);
+  --radius: 0.5rem;
+}
+
+/* ----------------------------------------------------------------------
+   Per-section color themes.
+   Each wrapper re-scopes the semantic tokens, so components keep using
+   bg-background / text-foreground / text-accent and simply adopt the
+   chapter's color temperature. This drives the page's rhythm:
+   navy climaxes (Hero, Final CTA), a midnight problem, cream content.
+---------------------------------------------------------------------- */
+
+/* Deep navy — Hero / Final CTA climaxes. Cream text, amber + cyan light. */
+.theme-navy {
+  --background: oklch(0.14 0.008 255);
+  --foreground: oklch(0.97 0.004 95);
+  --card: oklch(0.18 0.012 255);
+  --secondary: oklch(0.21 0.014 255);
+  --muted-foreground: oklch(0.8 0.01 240);
+  --accent: oklch(0.78 0.13 65);
+  --accent-foreground: oklch(0.14 0.008 255);
+  --border: oklch(1 0 0 / 14%);
+  --ring: oklch(0.78 0.13 65);
+}
+
+/* Midnight — Problem. Even deeper, white text, amber accent. */
+.theme-midnight {
+  --background: oklch(0.17 0.03 258);
+  --foreground: oklch(0.97 0.008 95);
+  --card: oklch(0.21 0.032 258);
+  --secondary: oklch(0.24 0.034 258);
+  --muted-foreground: oklch(0.74 0.02 240);
+  --accent: oklch(0.78 0.13 65);
+  --accent-foreground: oklch(0.17 0.03 258);
+  --border: oklch(1 0 0 / 12%);
+  --ring: oklch(0.78 0.13 65);
+}
+
+/* Per-industry accent swaps for the Use Case section. */
+.accent-amber {
+  --accent: oklch(0.72 0.14 55);
+}
+.accent-pink {
+  --accent: oklch(0.7 0.13 350);
+}
+.accent-cyan {
+  --accent: oklch(0.68 0.12 220);
+}
+.accent-violet {
+  --accent: oklch(0.62 0.16 295);
+}
+.accent-navy {
+  --accent: oklch(0.5 0.09 255);
+}
+
+@layer base {
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: clip;
+  }
+
+  .lenis.lenis-smooth iframe {
+    pointer-events: none;
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    /* NOTE: no global scroll-behavior: smooth — normal wheel/touch scroll must
+       stay 100% native. Smooth scrolling is applied only on nav clicks via JS
+       (see lib/scroll-to.ts). */
+    /* offset anchor jumps so the fixed header doesn't cover section tops */
+    scroll-padding-top: 5rem;
+  }
+  body {
+    /* Japanese reads better with a touch more letter-spacing */
+    letter-spacing: 0.02em;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Comfortable defaults for long-form Japanese body copy */
+  p {
+    line-height: 2;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: 0.01em;
+  }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
