@@ -1808,6 +1808,11 @@
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
   }
 
+  .blur {
+    --tw-blur: blur(8px);
+    filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );
+  }
+
   .blur-3xl {
     --tw-blur: blur(var(--blur-3xl));
     filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );
@@ -1852,14 +1857,14 @@
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
 
-  .transition-\[filter\] {
-    transition-property: filter;
+  .transition-\[opacity\,filter\,transform\] {
+    transition-property: opacity, filter, transform;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
 
-  .transition-\[opacity\,filter\,transform\] {
-    transition-property: opacity, filter, transform;
+  .transition-\[transform\,filter\] {
+    transition-property: transform, filter;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
@@ -1885,11 +1890,6 @@
   .duration-300 {
     --tw-duration: .3s;
     transition-duration: .3s;
-  }
-
-  .duration-500 {
-    --tw-duration: .5s;
-    transition-duration: .5s;
   }
 
   .duration-700 {

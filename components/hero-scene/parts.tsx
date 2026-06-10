@@ -8,8 +8,9 @@ import {
   BLOOM_WARM,
   CAM_END,
   CAM_START,
+  ENTER_END,
+  ENTER_START,
   INK,
-  OPENING_PHOTO_PRESENCE,
   smoothstep,
 } from '@/components/hero-scene/constants'
 import type {
@@ -18,6 +19,7 @@ import type {
   PhotoLayerProps,
 } from '@/types/hero-scene'
 
+// 主役＝入り込む1枚の世界。断片＝奥に薄く漂う他業種の気配。
 export function PhotoLayer({
   def,
   texture,
@@ -26,41 +28,46 @@ export function PhotoLayer({
 }: PhotoLayerProps) {
   const group = useRef<THREE.Group>(null)
   const mat = useRef<THREE.MeshBasicMaterial>(null)
-  const { camera } = useThree()
   const phase = useMemo(() => Math.random() * Math.PI * 2, [])
 
   useFrame((state, delta) => {
     const g = group.current
     const m = mat.current
     if (!g || !m) return
-
-    const camZ = camera.position.z
-    const ahead = camZ - def.pos[2]
-
-    // 近づくほど霧から静かに立ち上がる。近景は最初から少しだけ見えている。
-    const reveal = smoothstep(13, 7.5, ahead)
-    const opening =
-      (1 - smoothstep(0.04, 0.3, progress.current)) * smoothstep(20, 11, ahead)
-    const presence = Math.max(reveal, opening * OPENING_PHOTO_PRESENCE)
-
-    // カメラが到達したら静かに脇へ流して通り過ぎる（派手に飛ばさない）。
-    const pass = reduced ? 0 : smoothstep(2.4, -0.8, ahead)
-    const passFade = smoothstep(-1.8, 1.4, ahead)
-    const baseTex = texture ? 1 : 0
-
-    m.opacity +=
-      (baseTex * presence * passFade - m.opacity) * Math.min(1, delta * 3)
-
+    const p = progress.current
     const t = state.clock.elapsedTime
-    const fx = reduced ? 0 : Math.cos(t * 0.24 + phase) * def.drift * 0.5
-    const fy = reduced ? 0 : Math.sin(t * 0.3 + phase) * def.drift
-    const approach = (1 - presence) * -0.8
+    const baseTex = texture ? 1 : 0
+    const k = Math.min(1, delta * 4)
 
-    g.position.x = def.pos[0] + def.sweep[0] * pass + fx
-    g.position.y = def.pos[1] + def.sweep[1] * pass + fy
-    g.position.z = def.pos[2] + approach
-    g.rotation.y = def.rotY - def.sweep[0] * 0.03 * pass
-    g.rotation.x = def.rotX
+    if (def.role === 'main') {
+      // 最初から世界が見えている → 近づく → 一度だけ中を通り抜けて画面外へ。
+      const intro = smoothstep(0, 0.04, p)
+      const approach = smoothstep(0, ENTER_START, p)
+      const enter = reduced ? 0 : smoothstep(ENTER_START, ENTER_END, p)
+      const pass = 1 - smoothstep(0.5, 1, enter)
+
+      const target = baseTex * intro * pass
+      m.opacity += (target - m.opacity) * k
+
+      const float = reduced ? 0 : Math.sin(t * 0.14 + phase) * 0.05
+      g.position.x = def.pos[0] + enter * 2.2
+      g.position.y = def.pos[1] + enter * 0.8 + float
+      g.position.z = def.pos[2] + approach * 0.5 + enter * 4.4
+      g.rotation.y = def.rotY - enter * 0.14
+      g.rotation.x = def.rotX
+      g.scale.setScalar(1 + approach * 0.1 + enter * 1.6)
+    } else {
+      // 断片：薄く立ち上がり、Meaning に向けて静かに消えていく。
+      const appear = smoothstep(0.02, 0.16, p)
+      const fade = 1 - smoothstep(0.32, 0.66, p)
+      const target = baseTex * def.maxOpacity * appear * fade
+      m.opacity += (target - m.opacity) * Math.min(1, delta * 3)
+
+      const float = reduced ? 0 : Math.sin(t * 0.1 + phase) * 0.05
+      g.position.x = def.pos[0]
+      g.position.y = def.pos[1] + float
+      g.position.z = def.pos[2] - p * 1.6
+    }
   })
 
   return (
@@ -81,7 +88,7 @@ export function PhotoLayer({
   )
 }
 
-// 奥の光源周辺に、ごく少数の塵が静かに漂うだけ（画面全体には飛ばさない）。
+// 空気としての塵。見せるためではなく、奥行きを感じさせるためだけに、ごく薄く。
 export function Motes({
   progress,
   glow,
@@ -91,7 +98,7 @@ export function Motes({
 }) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const bloom = useRef<THREE.InstancedMesh>(null)
-  const count = 56
+  const count = 30
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const glowDummy = useMemo(() => new THREE.Object3D(), [])
   const data = useMemo(() => {
@@ -105,11 +112,11 @@ export function Motes({
     }[] = []
     for (let i = 0; i < count; i++) {
       arr.push({
-        x: (Math.random() - 0.5) * 8,
-        y: (Math.random() - 0.5) * 5,
-        z: CAM_START - Math.random() * 28,
-        s: 0.016 + Math.random() * 0.03,
-        speed: 0.5 + Math.random() * 0.8,
+        x: (Math.random() - 0.5) * 9,
+        y: (Math.random() - 0.5) * 5.5,
+        z: CAM_START - Math.random() * 30,
+        s: 0.014 + Math.random() * 0.024,
+        speed: 0.4 + Math.random() * 0.7,
         phase: Math.random() * Math.PI * 2,
       })
     }
@@ -128,7 +135,7 @@ export function Motes({
       mesh.setMatrixAt(i, dummy.matrix)
 
       glowDummy.position.set(d.x, d.y, d.z)
-      glowDummy.scale.setScalar(d.s * 2.4)
+      glowDummy.scale.setScalar(d.s * 2.2)
       glowDummy.updateMatrix()
       glowMesh.setMatrixAt(i, glowDummy.matrix)
 
@@ -147,28 +154,28 @@ export function Motes({
     const glowMesh = bloom.current
     if (!mesh || !glowMesh) return
     const camZ = state.camera.position.z
-    const farZ = camZ - 30
-    const nearZ = camZ + 2.4
-    const stream = reduced ? 0.2 : 0.6 + progress.current * 1.8
+    const farZ = camZ - 32
+    const nearZ = camZ + 2
+    const stream = reduced ? 0.12 : 0.4 + progress.current * 1.0
     data.forEach((d, i) => {
       d.z += delta * stream * d.speed
       if (d.z > nearZ) {
         d.z = farZ - Math.random() * 6
-        d.x = (Math.random() - 0.5) * 8
-        d.y = (Math.random() - 0.5) * 5
+        d.x = (Math.random() - 0.5) * 9
+        d.y = (Math.random() - 0.5) * 5.5
       }
       const depth = THREE.MathUtils.clamp((d.z - farZ) / (nearZ - farZ), 0, 1)
       const t = state.clock.elapsedTime
-      const drift = reduced ? 0 : Math.sin(t * 0.4 + d.phase) * 0.05
+      const drift = reduced ? 0 : Math.sin(t * 0.32 + d.phase) * 0.04
 
       dummy.position.set(d.x + drift * depth, d.y - drift * 0.5 * depth, d.z)
-      const scale = d.s * (0.4 + depth * 2.0)
+      const scale = d.s * (0.4 + depth * 1.6)
       dummy.scale.setScalar(scale)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
 
       glowDummy.position.copy(dummy.position)
-      glowDummy.scale.setScalar(scale * (2.2 + depth * 2.0))
+      glowDummy.scale.setScalar(scale * (1.8 + depth * 1.6))
       glowDummy.updateMatrix()
       glowMesh.setMatrixAt(i, glowDummy.matrix)
     })
@@ -183,7 +190,7 @@ export function Motes({
         <meshBasicMaterial
           map={glow}
           transparent
-          opacity={0.34}
+          opacity={0.16}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
           toneMapped={false}
@@ -193,7 +200,7 @@ export function Motes({
         <circleGeometry args={[1, 12]} />
         <meshBasicMaterial
           transparent
-          opacity={0.55}
+          opacity={0.28}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
           toneMapped={false}
@@ -203,7 +210,7 @@ export function Motes({
   )
 }
 
-// 霧の薄い層。奥にだけ、ごく弱く。WebGL感を出さないよう数・濃度を絞る。
+// 霧は奥だけ、ごく弱く。空気の層として感じる程度に。
 export function CloudField({
   texture,
   progress,
@@ -218,19 +225,19 @@ export function CloudField({
     return Array.from({ length: 3 }, () => ({
       x: -10 + Math.random() * 20,
       y: -3 + Math.random() * 6,
-      z: CAM_START - 14 - Math.random() * 22,
-      speed: 0.012 + Math.random() * 0.022,
-      stream: 0.14 + Math.random() * 0.3,
+      z: CAM_START - 16 - Math.random() * 22,
+      speed: 0.01 + Math.random() * 0.018,
+      stream: 0.12 + Math.random() * 0.24,
       phase: Math.random() * Math.PI * 2,
-      layers: Array.from({ length: 5 + Math.round(Math.random() * 4) }, () => ({
+      layers: Array.from({ length: 5 + Math.round(Math.random() * 3) }, () => ({
         x: (Math.random() - 0.5) * 4.4,
         y: (Math.random() - 0.5) * 2.2,
         z: (Math.random() - 0.5) * 3,
-        scale: 1.8 + Math.random() * 3,
+        scale: 2 + Math.random() * 3,
         aspect: 1.6 + Math.random() * 1.3,
         angle: Math.random() * Math.PI * 2,
-        spin: (0.012 + Math.random() * 0.04) * (Math.random() > 0.5 ? 1 : -1),
-        opacity: 0.04 + Math.random() * 0.06,
+        spin: (0.008 + Math.random() * 0.03) * (Math.random() > 0.5 ? 1 : -1),
+        opacity: 0.03 + Math.random() * 0.035,
       })),
     }))
   }, [])
@@ -239,14 +246,14 @@ export function CloudField({
     const g = group.current
     if (!g) return
     const time = clock.elapsedTime
-    const farZ = camera.position.z - 40
+    const farZ = camera.position.z - 42
     const nearZ = camera.position.z + 4
     g.children.forEach((child, i) => {
       const cloud = clouds[i]
       const cluster = child as THREE.Group
       const driftSpeed = reduced ? cloud.speed * 0.28 : cloud.speed
       const streamSpeed =
-        reduced ? cloud.stream * 0.2 : cloud.stream * (0.8 + progress.current * 1.1)
+        reduced ? cloud.stream * 0.2 : cloud.stream * (0.8 + progress.current * 0.9)
 
       cluster.position.x += delta * driftSpeed
       cluster.position.z += delta * streamSpeed
@@ -260,10 +267,10 @@ export function CloudField({
         cluster.position.z = farZ - Math.random() * 10
       }
 
-      cluster.position.y = cloud.y + Math.sin(time * 0.07 + cloud.phase) * 0.34
-      cluster.rotation.y = Math.sin(time * 0.03 + cloud.phase) * 0.06
+      cluster.position.y = cloud.y + Math.sin(time * 0.06 + cloud.phase) * 0.3
+      cluster.rotation.y = Math.sin(time * 0.025 + cloud.phase) * 0.05
       const depth = THREE.MathUtils.clamp((cluster.position.z - farZ) / (nearZ - farZ), 0, 1)
-      const depthFade = smoothstep(0.04, 0.26, depth) * (1 - smoothstep(0.8, 1, depth))
+      const depthFade = smoothstep(0.04, 0.26, depth) * (1 - smoothstep(0.78, 1, depth))
 
       cluster.children.forEach((layerChild, j) => {
         const layer = cloud.layers[j]
@@ -274,7 +281,7 @@ export function CloudField({
         mat.opacity =
           layer.opacity *
           depthFade *
-          (0.82 + Math.sin(time * 0.12 + cloud.phase + j) * 0.18)
+          (0.84 + Math.sin(time * 0.1 + cloud.phase + j) * 0.16)
       })
     })
   })
@@ -308,7 +315,7 @@ export function CloudField({
   )
 }
 
-// カメラ：スクロールでゆっくり奥へ。マウスはほんの少しの視差だけ。
+// カメラ：スクロールでゆっくり奥へ。写真の中を一度だけ通り抜ける旅程を支える。
 export function Rig({
   progress,
   reduced,
@@ -330,46 +337,51 @@ export function Rig({
     const k = Math.min(1, delta * 2.2)
     const p = progress.current
     const t = state.clock.elapsedTime
-    const autoX = Math.sin(t * 0.16) * 0.08
-    const autoY = Math.cos(t * 0.13) * 0.05
+    const enter = smoothstep(ENTER_START, ENTER_END, p)
+    const autoX = Math.sin(t * 0.14) * 0.06
+    const autoY = Math.cos(t * 0.12) * 0.04
     mouse.current.x += (target.current.x + autoX - mouse.current.x) * k
     mouse.current.y += (target.current.y + autoY - mouse.current.y) * k
 
-    const z = reduced ? CAM_START - p * 1.5 : CAM_START + (CAM_END - CAM_START) * p
+    const z = reduced ? CAM_START - p * 1.2 : CAM_START + (CAM_END - CAM_START) * p
     camera.position.z += (z - camera.position.z) * k
 
-    // 右にわずかに寄せ、左のコピー領域を常に空ける。視差は控えめ。
+    // 通り抜ける瞬間だけ、わずかに主役側へ寄る（入り込む手応え）。
+    const baseX = 0.3 + enter * 0.5
     const sway = reduced ? 0.2 : 1
-    const baseX = 0.4
-    camera.position.x += (baseX + mouse.current.x * 0.4 * sway - camera.position.x) * k
-    camera.position.y += (-mouse.current.y * 0.28 * sway - camera.position.y) * k
-    camera.rotation.y += (-mouse.current.x * 0.03 - camera.rotation.y) * k
-    camera.rotation.x += (mouse.current.y * 0.02 - camera.rotation.x) * k
+    camera.position.x += (baseX + mouse.current.x * 0.32 * sway - camera.position.x) * k
+    camera.position.y += (-mouse.current.y * 0.22 * sway - camera.position.y) * k
+    camera.rotation.y += (-mouse.current.x * 0.025 - camera.rotation.y) * k
+    camera.rotation.x += (mouse.current.y * 0.018 - camera.rotation.x) * k
   })
 
   return null
 }
 
-// 奥に1点だけの光。画面全体は光らせず、奥行きの余韻として置く。
+// 奥の光。写真の中を通り抜けた瞬間に立ち上がり、Meaning の静けさを照らす。
 export function Atmosphere({
   progress,
   glow,
 }: AtmosphereProps) {
-  const warmMat = useRef<THREE.MeshBasicMaterial>(null)
-  const warm = useRef<THREE.Group>(null)
+  const mat = useRef<THREE.MeshBasicMaterial>(null)
+  const grp = useRef<THREE.Group>(null)
   useFrame(({ camera }) => {
     const p = progress.current
-    if (warmMat.current) warmMat.current.opacity = 0.2 + smoothstep(0.45, 1, p) * 0.4
-    if (warm.current) {
-      warm.current.position.z = Math.min(-12, camera.position.z - 5)
+    const enter = smoothstep(ENTER_START, ENTER_END, p)
+    const settle = 1 - smoothstep(0.62, 0.95, p)
+    if (mat.current) {
+      mat.current.opacity = (0.1 + enter * 0.46) * (0.5 + settle * 0.5)
+    }
+    if (grp.current) {
+      grp.current.position.z = Math.min(-10, camera.position.z - 6)
     }
   })
   return (
-    <group ref={warm}>
-      <mesh position={[0.6, 0.2, 0]} scale={[34, 24, 1]}>
+    <group ref={grp}>
+      <mesh position={[0.5, 0.1, 0]} scale={[30, 22, 1]}>
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
-          ref={warmMat}
+          ref={mat}
           map={glow}
           transparent
           depthWrite={false}

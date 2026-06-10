@@ -34,7 +34,7 @@ export function HeroSceneScene({
       img.src = def.photo
       const build = (image: HTMLImageElement | null) => {
         if (!alive) return
-        const tex = makePhotoTexture(image, def.ar)
+        const tex = makePhotoTexture(image, def.ar, def.role === 'fragment')
         made.push(tex)
         setTextures((prev) => ({ ...prev, [i]: tex }))
       }
@@ -58,7 +58,7 @@ export function HeroSceneScene({
   return (
     <>
       <color attach="background" args={[BG]} />
-      <fog attach="fog" args={[BG, 7, 26]} />
+      <fog attach="fog" args={[BG, 8, 30]} />
       <Atmosphere progress={progress} glow={glow} />
       <CloudField texture={cloud} progress={progress} reduced={reduced} />
       <Motes progress={progress} glow={glow} reduced={reduced} />

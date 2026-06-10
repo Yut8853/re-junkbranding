@@ -12,39 +12,66 @@ function clamp(value: number, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value))
 }
 
-function mix(from: number, to: number, amount: number) {
-  return from + (to - from) * clamp(amount)
-}
-
-// 背景の強度を、スクロール量（ビューポート高単位 vp）に対して滑らかに落とす。
-// Hero=100% → Bridge/Issue/Problem まで余韻を残し、Transformation以降で静かに引く。
-const STOPS: [number, number][] = [
-  [0, 1],      // Hero
-  [1.0, 0.82], // Bridge / 02 Meaning
-  [1.9, 0.6],  // Issue / 03
-  [2.7, 0.4],  // Problem
-  [3.6, 0.2],  // Transformation以降
-  [5.0, 0.12],
-]
-
-function backgroundIntensity(vp: number) {
-  if (vp <= STOPS[0][0]) return STOPS[0][1]
-  for (let i = 1; i < STOPS.length; i++) {
-    if (vp <= STOPS[i][0]) {
-      const [v0, o0] = STOPS[i - 1]
-      const [v1, o1] = STOPS[i]
-      return mix(o0, o1, (vp - v0) / (v1 - v0))
+// スクロール量（ビューポート高単位 vp）に対する感情の曲線。
+// 各セクションで opacity だけでなく scale / blur / brightness / contrast を変え、
+// 「世界へ近づく → 静まる → 遠のく → 沈む」を背景そのもので表現する。
+function lerpStops(stops: [number, number][], vp: number) {
+  if (vp <= stops[0][0]) return stops[0][1]
+  for (let i = 1; i < stops.length; i++) {
+    if (vp <= stops[i][0]) {
+      const [v0, a] = stops[i - 1]
+      const [v1, b] = stops[i]
+      const t = (vp - v0) / (v1 - v0)
+      return a + (b - a) * t
     }
   }
-  return STOPS[STOPS.length - 1][1]
+  return stops[stops.length - 1][1]
 }
+
+// Hero=世界へ近づく / Meaning=静まり言葉を受け止める / Issue=少し遠のく / Problem=深く沈む。
+const OPACITY: [number, number][] = [
+  [0, 1],
+  [1.0, 0.85],
+  [1.9, 0.62],
+  [2.7, 0.4],
+  [3.6, 0.2],
+  [5.0, 0.12],
+]
+const SCALE: [number, number][] = [
+  [0, 1.0],
+  [1.0, 1.06], // Hero〜Meaning：寄っていく
+  [1.9, 1.03], // Issue：少し引く
+  [2.7, 1.0],
+  [3.6, 0.98], // Problem：奥へ退く
+]
+const BLUR: [number, number][] = [
+  [0, 0],
+  [1.0, 0.4], // Meaning：わずかに霞み、言葉を前に
+  [1.9, 1.4], // Issue：背景を主張させない
+  [2.7, 2.6],
+  [3.6, 4.2], // Problem：深く沈む
+]
+const BRIGHT: [number, number][] = [
+  [0, 1],
+  [1.0, 0.95],
+  [1.9, 0.86],
+  [2.7, 0.76],
+  [3.6, 0.64],
+]
+const CONTRAST: [number, number][] = [
+  [0, 1.04],
+  [1.0, 1.0],
+  [1.9, 0.95],
+  [2.7, 0.9],
+  [3.6, 0.85],
+]
 
 export function FixedWebGLBackground() {
   const progress = useRef(0)
   const [mounted, setMounted] = useState(false)
   const [reduced, setReduced] = useState(false)
   const [opacity, setOpacity] = useState(1)
-  const [veil, setVeil] = useState(0)
+  const [fx, setFx] = useState({ scale: 1, blur: 0, bright: 1, contrast: 1.04 })
 
   useEffect(() => {
     setMounted(true)
@@ -68,8 +95,17 @@ export function FixedWebGLBackground() {
         ? clamp(1 - Math.abs(contact.getBoundingClientRect().top) / window.innerHeight)
         : 0
       progress.current = reduced ? p * 0.12 : p
-      setOpacity(Math.max(backgroundIntensity(vp), contactPresence * 0.5))
-      setVeil(clamp((vp - 0.8) / 2.4))
+      setOpacity(Math.max(lerpStops(OPACITY, vp), contactPresence * 0.5))
+      if (reduced) {
+        setFx({ scale: 1, blur: 0, bright: 1, contrast: 1 })
+      } else {
+        setFx({
+          scale: lerpStops(SCALE, vp),
+          blur: lerpStops(BLUR, vp),
+          bright: lerpStops(BRIGHT, vp),
+          contrast: lerpStops(CONTRAST, vp),
+        })
+      }
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -88,9 +124,10 @@ export function FixedWebGLBackground() {
       style={{ opacity }}
     >
       <div
-        className="h-full w-full transition-[filter] duration-500 ease-out"
+        className="h-full w-full transition-[transform,filter] duration-700 ease-out will-change-transform"
         style={{
-          filter: `blur(${veil * 1.1}px) brightness(${1 - veil * 0.06})`,
+          transform: `scale(${fx.scale})`,
+          filter: `blur(${fx.blur}px) brightness(${fx.bright}) contrast(${fx.contrast})`,
         }}
       >
         {mounted && <HeroScene progress={progress} reduced={reduced} />}
@@ -100,7 +137,7 @@ export function FixedWebGLBackground() {
       {/* 奥の光の余韻だけを、ごく薄く。画面全体は光らせない。 */}
       <div
         className="absolute inset-0 bg-[radial-gradient(circle_at_64%_42%,rgba(238,242,249,0.10),transparent_46%),linear-gradient(180deg,rgba(6,7,11,0)_0%,rgba(6,7,11,0.12)_55%,rgba(6,7,11,0.5)_100%)]"
-        style={{ opacity: 0.2 + veil * 0.3 }}
+        style={{ opacity: 0.2 + fx.blur * 0.06 }}
       />
     </div>
   )

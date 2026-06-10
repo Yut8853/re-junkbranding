@@ -462,23 +462,34 @@ _c = HeroScene;
 function clamp(value, min = 0, max = 1) {
     return Math.min(max, Math.max(min, value));
 }
-function mix(from, to, amount) {
-    return from + (to - from) * clamp(amount);
+// スクロール量（ビューポート高単位 vp）に対する感情の曲線。
+// 各セクションで opacity だけでなく scale / blur / brightness / contrast を変え、
+// 「世界へ近づく → 静まる → 遠のく → 沈む」を背景そのもので表現する。
+function lerpStops(stops, vp) {
+    if (vp <= stops[0][0]) return stops[0][1];
+    for(let i = 1; i < stops.length; i++){
+        if (vp <= stops[i][0]) {
+            const [v0, a] = stops[i - 1];
+            const [v1, b] = stops[i];
+            const t = (vp - v0) / (v1 - v0);
+            return a + (b - a) * t;
+        }
+    }
+    return stops[stops.length - 1][1];
 }
-// 背景の強度を、スクロール量（ビューポート高単位 vp）に対して滑らかに落とす。
-// Hero=100% → Bridge/Issue/Problem まで余韻を残し、Transformation以降で静かに引く。
-const STOPS = [
+// Hero=世界へ近づく / Meaning=静まり言葉を受け止める / Issue=少し遠のく / Problem=深く沈む。
+const OPACITY = [
     [
         0,
         1
     ],
     [
         1.0,
-        0.82
+        0.85
     ],
     [
         1.9,
-        0.6
+        0.62
     ],
     [
         2.7,
@@ -493,24 +504,106 @@ const STOPS = [
         0.12
     ]
 ];
-function backgroundIntensity(vp) {
-    if (vp <= STOPS[0][0]) return STOPS[0][1];
-    for(let i = 1; i < STOPS.length; i++){
-        if (vp <= STOPS[i][0]) {
-            const [v0, o0] = STOPS[i - 1];
-            const [v1, o1] = STOPS[i];
-            return mix(o0, o1, (vp - v0) / (v1 - v0));
-        }
-    }
-    return STOPS[STOPS.length - 1][1];
-}
+const SCALE = [
+    [
+        0,
+        1.0
+    ],
+    [
+        1.0,
+        1.06
+    ],
+    [
+        1.9,
+        1.03
+    ],
+    [
+        2.7,
+        1.0
+    ],
+    [
+        3.6,
+        0.98
+    ]
+];
+const BLUR = [
+    [
+        0,
+        0
+    ],
+    [
+        1.0,
+        0.4
+    ],
+    [
+        1.9,
+        1.4
+    ],
+    [
+        2.7,
+        2.6
+    ],
+    [
+        3.6,
+        4.2
+    ]
+];
+const BRIGHT = [
+    [
+        0,
+        1
+    ],
+    [
+        1.0,
+        0.95
+    ],
+    [
+        1.9,
+        0.86
+    ],
+    [
+        2.7,
+        0.76
+    ],
+    [
+        3.6,
+        0.64
+    ]
+];
+const CONTRAST = [
+    [
+        0,
+        1.04
+    ],
+    [
+        1.0,
+        1.0
+    ],
+    [
+        1.9,
+        0.95
+    ],
+    [
+        2.7,
+        0.9
+    ],
+    [
+        3.6,
+        0.85
+    ]
+];
 function FixedWebGLBackground() {
     _s();
     const progress = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(0);
     const [mounted, setMounted] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [reduced, setReduced] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [opacity, setOpacity] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(1);
-    const [veil, setVeil] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const [fx, setFx] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
+        scale: 1,
+        blur: 0,
+        bright: 1,
+        contrast: 1.04
+    });
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "FixedWebGLBackground.useEffect": ()=>{
             setMounted(true);
@@ -539,8 +632,22 @@ function FixedWebGLBackground() {
                     const contact = document.getElementById('contact');
                     const contactPresence = contact ? clamp(1 - Math.abs(contact.getBoundingClientRect().top) / window.innerHeight) : 0;
                     progress.current = reduced ? p * 0.12 : p;
-                    setOpacity(Math.max(backgroundIntensity(vp), contactPresence * 0.5));
-                    setVeil(clamp((vp - 0.8) / 2.4));
+                    setOpacity(Math.max(lerpStops(OPACITY, vp), contactPresence * 0.5));
+                    if (reduced) {
+                        setFx({
+                            scale: 1,
+                            blur: 0,
+                            bright: 1,
+                            contrast: 1
+                        });
+                    } else {
+                        setFx({
+                            scale: lerpStops(SCALE, vp),
+                            blur: lerpStops(BLUR, vp),
+                            bright: lerpStops(BRIGHT, vp),
+                            contrast: lerpStops(CONTRAST, vp)
+                        });
+                    }
                 }
             }["FixedWebGLBackground.useEffect.onScroll"];
             window.addEventListener('scroll', onScroll, {
@@ -566,48 +673,49 @@ function FixedWebGLBackground() {
         },
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                className: "h-full w-full transition-[filter] duration-500 ease-out",
+                className: "h-full w-full transition-[transform,filter] duration-700 ease-out will-change-transform",
                 style: {
-                    filter: `blur(${veil * 1.1}px) brightness(${1 - veil * 0.06})`
+                    transform: `scale(${fx.scale})`,
+                    filter: `blur(${fx.blur}px) brightness(${fx.bright}) contrast(${fx.contrast})`
                 },
                 children: mounted && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(HeroScene, {
                     progress: progress,
                     reduced: reduced
                 }, void 0, false, {
                     fileName: "[project]/components/fixed-webgl-background.tsx",
-                    lineNumber: 96,
+                    lineNumber: 133,
                     columnNumber: 21
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/components/fixed-webgl-background.tsx",
-                lineNumber: 90,
+                lineNumber: 126,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "absolute inset-0 bg-gradient-to-b from-background/30 via-transparent to-background/55 md:bg-gradient-to-r md:from-background/70 md:via-background/12 md:to-transparent"
             }, void 0, false, {
                 fileName: "[project]/components/fixed-webgl-background.tsx",
-                lineNumber: 99,
+                lineNumber: 136,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$2$2e$6_$40$babel$2b$core$40$7$2e$29$2e$7_react$2d$dom$40$19$2e$2$2e$4_react$40$19$2e$2$2e$4_$5f$react$40$19$2e$2$2e$4$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "absolute inset-0 bg-[radial-gradient(circle_at_64%_42%,rgba(238,242,249,0.10),transparent_46%),linear-gradient(180deg,rgba(6,7,11,0)_0%,rgba(6,7,11,0.12)_55%,rgba(6,7,11,0.5)_100%)]",
                 style: {
-                    opacity: 0.2 + veil * 0.3
+                    opacity: 0.2 + fx.blur * 0.06
                 }
             }, void 0, false, {
                 fileName: "[project]/components/fixed-webgl-background.tsx",
-                lineNumber: 101,
+                lineNumber: 138,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/components/fixed-webgl-background.tsx",
-        lineNumber: 85,
+        lineNumber: 121,
         columnNumber: 5
     }, this);
 }
-_s(FixedWebGLBackground, "eDYs1FoZVA0ubIfHM8sJf2ZqhPk=");
+_s(FixedWebGLBackground, "s4/8T4t8IJPJmOsDEn06FnkZEpw=");
 _c1 = FixedWebGLBackground;
 var _c, _c1;
 __turbopack_context__.k.register(_c, "HeroScene");

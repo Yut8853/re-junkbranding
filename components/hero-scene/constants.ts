@@ -8,22 +8,24 @@ export const WARM = new THREE.Color('#eef2f9')
 export const BLOOM_INK = new THREE.Color('#eaf0ff').multiplyScalar(1.5)
 export const BLOOM_WARM = new THREE.Color('#ffffff').multiplyScalar(1.7)
 
-// カメラはゆっくり奥へ。派手に飛ばさない短い旅程。
-export const CAM_START = 5.0
-export const CAM_END = -4.5
-export const OPENING_PHOTO_PRESENCE = 0.5
+// カメラはゆっくり奥へ。派手に飛ばさないが、写真の中を一度だけ通り抜ける。
+export const CAM_START = 6.0
+export const CAM_END = -2.5
 
-// 写真は「カード」ではなく空間の断片。右側に寄せ、左のコピー領域は常に空ける。
-// 近景1・中景2・遠景1の4枚に絞る。
+// 「写真の世界に入った瞬間」を作る区間（progress 基準）。
+// この間に主役写真が拡大して画面外へ抜け、奥の光と空気が現れ、Meaning へ渡す。
+export const ENTER_START = 0.24
+export const ENTER_END = 0.46
+
+// 写真は均等な板の列ではない。中央〜右に大きな主役の世界が1つ、
+// その奥に他業種の断片がごく薄く漂うだけ。Hero は業種一覧ではなく世界観の入口。
 export const LAYERS: LayerDef[] = [
-  // 近景：飲食の手元・カウンター（メイン）
-  { photo: '/jp/cafe.png', label: '', pos: [2.7, -0.15, -1.2], rotY: -0.16, rotX: 0.02, h: 3.5, ar: 1.5, drift: 0.05, sweep: [1.6, -0.3] },
-  // 中景：サロンの空間
-  { photo: '/jp/salon.png', label: '', pos: [3.9, 1.5, -4.2], rotY: -0.22, rotX: 0.0, h: 2.7, ar: 0.82, drift: 0.06, sweep: [1.8, 0.6] },
-  // 中景：町工場の手元・道具
-  { photo: '/jp/craft.png', label: '', pos: [3.1, -1.5, -6.4], rotY: -0.18, rotX: 0.03, h: 2.5, ar: 1.4, drift: 0.07, sweep: [1.6, -0.6] },
-  // 遠景：落ち着いた空間
-  { photo: '/jp/clinic.png', label: '', pos: [2.4, 0.7, -9.6], rotY: -0.16, rotX: 0.0, h: 2.3, ar: 1.45, drift: 0.08, sweep: [1.2, 0.4] },
+  // 主役：入り込む1枚の世界（大きく・近く・中央右）。
+  { photo: '/jp/cafe.png', role: 'main', pos: [1.9, 0, -0.8], rotY: -0.08, rotX: 0.01, h: 5.0, ar: 1.5, maxOpacity: 1 },
+  // 奥の断片：他業種の気配。薄く・小さく・深く。
+  { photo: '/jp/salon.png', role: 'fragment', pos: [-3.6, 1.8, -13.5], rotY: 0.22, rotX: 0.0, h: 2.0, ar: 0.82, maxOpacity: 0.24 },
+  { photo: '/jp/craft.png', role: 'fragment', pos: [4.4, -2.1, -16.5], rotY: -0.24, rotX: 0.02, h: 2.2, ar: 1.4, maxOpacity: 0.2 },
+  { photo: '/jp/clinic.png', role: 'fragment', pos: [-2.2, -1.4, -19.5], rotY: 0.18, rotX: 0.0, h: 2.0, ar: 1.45, maxOpacity: 0.16 },
 ]
 
 export function smoothstep(edge0: number, edge1: number, x: number) {

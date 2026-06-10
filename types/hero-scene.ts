@@ -3,16 +3,18 @@ import type * as THREE from 'three'
 
 export type HeroSceneProgressRef = MutableRefObject<number>
 
+export type LayerRole = 'main' | 'fragment'
+
 export type LayerDef = {
   photo: string
-  label: string
+  role: LayerRole
   pos: [number, number, number]
   rotY: number
   rotX: number
   h: number
   ar: number
-  drift: number
-  sweep: [number, number]
+  /** 断片レイヤーの最大不透明度（主役は無視される）。 */
+  maxOpacity: number
 }
 
 export type PhotoLayerProps = {

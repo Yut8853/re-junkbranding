@@ -1,4 +1,7 @@
-{"timestamp":"00:00:02.859","source":"Server","level":"LOG","message":""}
-{"timestamp":"00:00:27.732","source":"Browser","level":"WARN","message":"THREE.Clock: This module has been deprecated. Please use THREE.Timer instead."}
-{"timestamp":"00:00:27.758","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\\u001b[39m\" \"\\u001b[2m(file:///Users/yutakakizaki/Library/CloudStorage/GoogleDrive-factory0611@gmail.com/マイドライブ/dev-create/junkbranding/re-junkbranding/.next/dev/static/chunks/01vs_next_dist_0z7rf41._.js:2477:13)\\u001b[22m\""}
-{"timestamp":"00:00:27.759","source":"Browser","level":"WARN","message":"\u001b[33mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\u001b[39m"}
+{"timestamp":"00:00:03.406","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:08.188","source":"Browser","level":"WARN","message":"THREE.Clock: This module has been deprecated. Please use THREE.Timer instead."}
+{"timestamp":"00:00:08.224","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\\u001b[39m\" \"\\u001b[2m(file:///Users/yutakakizaki/Library/CloudStorage/GoogleDrive-factory0611@gmail.com/マイドライブ/dev-create/junkbranding/re-junkbranding/.next/dev/static/chunks/01vs_next_dist_0z7rf41._.js:2477:13)\\u001b[22m\""}
+{"timestamp":"00:00:08.225","source":"Browser","level":"WARN","message":"\u001b[33mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\u001b[39m"}
+{"timestamp":"00:00:33.034","source":"Browser","level":"WARN","message":"THREE.Clock: This module has been deprecated. Please use THREE.Timer instead."}
+{"timestamp":"00:00:33.036","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\\u001b[39m\" \"\\u001b[2m(file:///Users/yutakakizaki/Library/CloudStorage/GoogleDrive-factory0611@gmail.com/マイドライブ/dev-create/junkbranding/re-junkbranding/.next/dev/static/chunks/01vs_next_dist_0z7rf41._.js:2477:13)\\u001b[22m\""}
+{"timestamp":"00:00:33.036","source":"Browser","level":"WARN","message":"\u001b[33mTHREE.Clock: This module has been deprecated. Please use THREE.Timer instead.\u001b[39m"}

@@ -17,18 +17,22 @@ function roundRect(
   ctx.closePath()
 }
 
-export function makePhotoTexture(img: HTMLImageElement | null, ar: number) {
+export function makePhotoTexture(
+  img: HTMLImageElement | null,
+  ar: number,
+  soft = false,
+) {
   const H = 768
   const W = Math.round(H * ar)
   const c = document.createElement('canvas')
   c.width = W
   c.height = H
   const ctx = c.getContext('2d')!
-  // 角丸は弱める。カードらしさを消す。
-  const r = 10
+  // 主役は「入り込む世界」なので角丸をほぼ消す。断片はもう少し丸く。
+  const r = soft ? 8 : 4
 
   ctx.save()
-  roundRect(ctx, 4, 4, W - 8, H - 8, r)
+  roundRect(ctx, 2, 2, W - 4, H - 4, r)
   ctx.clip()
 
   if (img) {
@@ -53,27 +57,44 @@ export function makePhotoTexture(img: HTMLImageElement | null, ar: number) {
     ctx.fillRect(0, 0, W, H)
   }
 
-  // 端を暗く溶かして「カード」ではなく空間の窓 / 記憶の断片に見せる。
-  const edge = ctx.createRadialGradient(
-    W / 2,
-    H / 2,
-    Math.min(W, H) * 0.26,
-    W / 2,
-    H / 2,
-    Math.max(W, H) * 0.62,
-  )
-  edge.addColorStop(0, 'rgba(6,7,11,0)')
-  edge.addColorStop(0.7, 'rgba(6,7,11,0.32)')
-  edge.addColorStop(1, 'rgba(6,7,11,0.92)')
-  ctx.fillStyle = edge
-  ctx.fillRect(0, 0, W, H)
+  if (soft) {
+    // 断片：端を強く暗部へ溶かし、全体も沈めて「遠い記憶」に。
+    const edge = ctx.createRadialGradient(
+      W / 2,
+      H / 2,
+      Math.min(W, H) * 0.14,
+      W / 2,
+      H / 2,
+      Math.max(W, H) * 0.56,
+    )
+    edge.addColorStop(0, 'rgba(6,7,11,0.18)')
+    edge.addColorStop(0.55, 'rgba(6,7,11,0.5)')
+    edge.addColorStop(1, 'rgba(6,7,11,1)')
+    ctx.fillStyle = edge
+    ctx.fillRect(0, 0, W, H)
+  } else {
+    // 主役：中央は鮮明に保ち、外周のわずかにだけビネット。カードの枠を感じさせない。
+    const edge = ctx.createRadialGradient(
+      W / 2,
+      H / 2,
+      Math.min(W, H) * 0.42,
+      W / 2,
+      H / 2,
+      Math.max(W, H) * 0.7,
+    )
+    edge.addColorStop(0, 'rgba(6,7,11,0)')
+    edge.addColorStop(0.8, 'rgba(6,7,11,0.16)')
+    edge.addColorStop(1, 'rgba(6,7,11,0.62)')
+    ctx.fillStyle = edge
+    ctx.fillRect(0, 0, W, H)
 
-  // ごく薄い下方向の沈み（奥行きの余韻）。ラベル・枠は持たない。
-  const g = ctx.createLinearGradient(0, H * 0.55, 0, H)
-  g.addColorStop(0, 'rgba(6,7,11,0)')
-  g.addColorStop(1, 'rgba(6,7,11,0.4)')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, W, H)
+    // 下方向のごく薄い沈み（奥行きの余韻）。
+    const g = ctx.createLinearGradient(0, H * 0.6, 0, H)
+    g.addColorStop(0, 'rgba(6,7,11,0)')
+    g.addColorStop(1, 'rgba(6,7,11,0.34)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, W, H)
+  }
 
   ctx.restore()
 
