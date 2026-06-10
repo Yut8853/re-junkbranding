@@ -1,7 +1,51 @@
-# macOS
-.DS_Store
+# Dependencies
+node_modules/
 
-# Next.js leftovers (project migrated to ./astro)
+# Build output
+dist/
+.output/
+
+# Astro
+.astro/
+
+# Legacy Next.js output
 .next/
+out/
 
-# dependencies / build output live inside ./astro
+# Caches
+.cache/
+.vite/
+.turbo/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Tests and coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# TypeScript
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor and local tooling
+.idea/
+.vscode/
+*.swp
+*.swo
