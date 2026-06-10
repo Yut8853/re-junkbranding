@@ -4,7 +4,7 @@ import floorVert from './shaders/floor.vert.glsl?raw';
 import floorFrag from './shaders/floor.frag.glsl?raw';
 import backlightVert from './shaders/backlight.vert.glsl?raw';
 import backlightFrag from './shaders/backlight.frag.glsl?raw';
-import { makeExhibitTexture, makeGlowTexture, type ExhibitTheme } from './textures';
+import { loadExhibitTexture, makeGlowTexture, type ExhibitTheme } from './textures';
 
 const BG = 0x05060a;
 const APERTURE = new THREE.Vector3(0, 4.2, -30);
@@ -74,7 +74,6 @@ export class Showroom {
     this.camPos.copy(this.camera.position);
 
     this.buildFloor();
-    this.buildWalls();
     this.buildExhibits();
     this.buildBackLight();
     this.buildMotes();
@@ -96,36 +95,19 @@ export class Showroom {
         uTime: { value: 0 },
         uExposure: { value: 1 },
         uOpen: { value: 0 },
-        uBase: { value: new THREE.Color(0x080a11) },
-        uGlow: { value: new THREE.Color(0x6f7ea6) },
+        uBase: { value: new THREE.Color(0x03090e) },
+        uGlow: { value: new THREE.Color(0x7f9fc2) },
         uAperture: { value: APERTURE.clone() },
         uCamPos: { value: this.camPos },
       },
     });
     this.track(this.floorMat);
 
-    const geo = this.track(new THREE.PlaneGeometry(48, 120, 1, 1));
+    const geo = this.track(new THREE.PlaneGeometry(48, 120, 96, 240));
     const floor = new THREE.Mesh(geo, this.floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.z = -28;
     this.scene.add(floor);
-  }
-
-  private buildWalls(): void {
-    const wallMat = this.track(
-      new THREE.MeshBasicMaterial({ color: 0x090b11, fog: true }),
-    );
-    const geo = this.track(new THREE.PlaneGeometry(80, 11));
-
-    const left = new THREE.Mesh(geo, wallMat);
-    left.position.set(-7, 5.2, -22);
-    left.rotation.y = Math.PI / 2;
-    this.scene.add(left);
-
-    const right = new THREE.Mesh(geo, wallMat);
-    right.position.set(7, 5.2, -22);
-    right.rotation.y = -Math.PI / 2;
-    this.scene.add(right);
   }
 
   private exhibit(
@@ -137,33 +119,42 @@ export class Showroom {
     const group = new THREE.Group();
     const [pw, ph] = size;
 
-    // Thin matte frame, slightly larger than the work — a deliberate margin.
+    // A thin, matte mount — a quiet margin around the work, not a chunky card.
     const frameMat = this.track(
       new THREE.MeshBasicMaterial({ color: 0x0c0d12, fog: true }),
     );
     const frame = new THREE.Mesh(
-      this.track(new THREE.PlaneGeometry(pw + 0.5, ph + 0.5)),
+      this.track(new THREE.PlaneGeometry(pw + 0.16, ph + 0.16)),
       frameMat,
     );
     group.add(frame);
 
-    // The work itself.
-    const texture = this.track(makeExhibitTexture(theme));
+    // The work itself: a photograph hung on the wall. Loads from
+    // public/exhibits/<theme>.webp; until then a painted placeholder stands in.
+    // color slightly below white keeps the print from glowing in the dim room.
     const plateMat = this.track(
-      new THREE.MeshBasicMaterial({ map: texture, fog: true, toneMapped: false }),
+      new THREE.MeshBasicMaterial({ color: 0xcfd0d6, fog: true }),
+    );
+    plateMat.map = this.track(
+      loadExhibitTexture(theme, (tex) => {
+        this.track(tex);
+        plateMat.map = tex;
+        plateMat.needsUpdate = true;
+      }),
     );
     const plate = new THREE.Mesh(this.track(new THREE.PlaneGeometry(pw, ph)), plateMat);
     plate.position.z = 0.02;
     group.add(plate);
 
-    // A soft spotlight wash above the work — it reads as deliberately lit.
+    // A soft spotlight wash above the work — it reads as deliberately lit, but
+    // gently, so the photograph keeps its own tonal range.
     const spotTex = this.track(makeGlowTexture());
     const spotMat = this.track(
       new THREE.SpriteMaterial({
         map: spotTex,
         color: theme === 'space' ? 0xbcd2f0 : 0xffe7c4,
         transparent: true,
-        opacity: 0.22,
+        opacity: 0.16,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         fog: true,

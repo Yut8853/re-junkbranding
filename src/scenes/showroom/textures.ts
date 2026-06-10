@@ -214,6 +214,44 @@ export function makeExhibitTexture(theme: ExhibitTheme): THREE.CanvasTexture {
   }
 }
 
+/** Where each exhibit photograph lives. Drop the real images here. */
+const EXHIBIT_SRC: Record<ExhibitTheme, string> = {
+  craft: '/exhibits/craft.webp',
+  space: '/exhibits/space.webp',
+  trust: '/exhibits/trust.webp',
+};
+
+const exhibitLoader = new THREE.TextureLoader();
+
+/**
+ * Load an exhibit's photograph as a hung "work".
+ *
+ * Returns a procedural placeholder immediately so the showroom never waits or
+ * breaks. When the real photo (public/exhibits/<theme>.webp) finishes loading,
+ * `onReady` fires with it; on error (no file yet) the placeholder simply stays.
+ * The photo is kept calm — sRGB, anisotropic, never tone-bypassed — so it reads
+ * as a framed print in a dim room, not a glowing screen.
+ */
+export function loadExhibitTexture(
+  theme: ExhibitTheme,
+  onReady: (tex: THREE.Texture) => void,
+): THREE.CanvasTexture {
+  const placeholder = makeExhibitTexture(theme);
+  exhibitLoader.load(
+    EXHIBIT_SRC[theme],
+    (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8;
+      onReady(tex);
+    },
+    undefined,
+    () => {
+      /* No photograph in public/exhibits yet — keep the painted placeholder. */
+    },
+  );
+  return placeholder;
+}
+
 /** Soft round glow used for the few dust motes drifting in the light. */
 export function makeGlowTexture(): THREE.CanvasTexture {
   const s = 128;
