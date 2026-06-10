@@ -2,12 +2,24 @@ import * as THREE from 'three';
 
 import floorVert from './shaders/floor.vert.glsl?raw';
 import floorFrag from './shaders/floor.frag.glsl?raw';
-import backlightVert from './shaders/backlight.vert.glsl?raw';
-import backlightFrag from './shaders/backlight.frag.glsl?raw';
+import gravityVert from './shaders/gravity.vert.glsl?raw';
+import gravityFrag from './shaders/gravity.frag.glsl?raw';
+import { WATER_PRESET, type WaterPreset } from './presets/waterPreset';
 import { loadExhibitTexture, makeGlowTexture, type ExhibitTheme } from './textures';
 
 const BG = 0x05060a;
-const APERTURE = new THREE.Vector3(0, 4.2, -30);
+const FAR_Z = -30;
+const GRAVITY_EFFECT = {
+  planeDistance: 3,
+  ease: 0.18,
+  cameraPull: 1.15,
+  cameraLift: 0.34,
+  exposureDip: 0.34,
+} as const;
+
+type WaterParams = {
+  -readonly [K in keyof WaterPreset]: WaterPreset[K] extends boolean ? boolean : number;
+};
 
 function clamp01(v: number): number {
   return Math.min(Math.max(v, 0), 1);
@@ -22,13 +34,17 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
+function cloneDefaultWaterPreset(): WaterParams {
+  return { ...WATER_PRESET };
+}
+
 /**
  * Digital Showroom.
  *
  * A single, refined 3D gallery that the whole page lives inside. The visitor
- * stands at the entrance and — driven by page scroll — walks down a lit path,
- * past two framed exhibits on the side walls, toward an opening doorway of
- * light at the far end (the brand's world). The space is the protagonist, not
+ * stands at the front and — driven by page scroll — walks down a quiet path,
+ * past two framed exhibits on the side walls, toward the far end of the
+ * gallery. The space is the protagonist, not
  * a background: it persists behind Hero, Meaning and Issue, dimming as it goes.
  */
 export class Showroom {
@@ -48,10 +64,15 @@ export class Showroom {
 
   private readonly camPos = new THREE.Vector3();
   private floorMat!: THREE.ShaderMaterial;
-  private backlightMat!: THREE.ShaderMaterial;
+  private gravityMat!: THREE.ShaderMaterial;
+  private gravityPlane!: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private motes!: THREE.Points;
   private moteSpeeds: number[] = [];
   private readonly disposables: Array<THREE.BufferGeometry | THREE.Material | THREE.Texture> = [];
+  private readonly waterParams: WaterParams = cloneDefaultWaterPreset();
+  private gravityTarget = 0;
+  private gravity = 0;
+  private disposed = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -75,7 +96,7 @@ export class Showroom {
 
     this.buildFloor();
     this.buildExhibits();
-    this.buildBackLight();
+    this.buildGravityField();
     this.buildMotes();
 
     this.resize();
@@ -94,11 +115,21 @@ export class Showroom {
       uniforms: {
         uTime: { value: 0 },
         uExposure: { value: 1 },
-        uOpen: { value: 0 },
         uBase: { value: new THREE.Color(0x03090e) },
-        uGlow: { value: new THREE.Color(0x7f9fc2) },
-        uAperture: { value: APERTURE.clone() },
         uCamPos: { value: this.camPos },
+        uWaveStrength: { value: this.waterParams.waveStrength },
+        uWaveScale: { value: this.waterParams.waveScale },
+        uWaveSpeed: { value: this.waterParams.waveSpeed },
+        uRippleStrength: { value: this.waterParams.rippleStrength },
+        uRippleScale: { value: this.waterParams.rippleScale },
+        uRippleSpeed: { value: this.waterParams.rippleSpeed },
+        uCrestSoftness: { value: this.waterParams.crestSoftness },
+        uFogStrength: { value: this.waterParams.fogStrength },
+        uHorizonFade: { value: this.waterParams.horizonFade },
+        uVignetteStrength: { value: this.waterParams.vignetteStrength },
+        uDepthDarkness: { value: this.waterParams.depthDarkness },
+        uShowGuides: { value: Number(this.waterParams.showGuides) },
+        uShowWaterOnly: { value: Number(this.waterParams.showWaterOnly) },
       },
     });
     this.track(this.floorMat);
@@ -108,6 +139,28 @@ export class Showroom {
     floor.rotation.x = -Math.PI / 2;
     floor.position.z = -28;
     this.scene.add(floor);
+  }
+
+  private buildGravityField(): void {
+    this.gravityMat = new THREE.ShaderMaterial({
+      vertexShader: gravityVert,
+      fragmentShader: gravityFrag,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: {
+        uTime: { value: 0 },
+        uStrength: { value: 0 },
+        uAspect: { value: 1 },
+      },
+    });
+    this.track(this.gravityMat);
+
+    const geo = this.track(new THREE.PlaneGeometry(1, 1, 1, 1));
+    this.gravityPlane = new THREE.Mesh(geo, this.gravityMat);
+    this.gravityPlane.renderOrder = 20;
+    this.scene.add(this.gravityPlane);
   }
 
   private exhibit(
@@ -166,7 +219,7 @@ export class Showroom {
     group.add(spot);
 
     group.position.set(pos[0], pos[1], pos[2]);
-    // Face the path, angled slightly toward the entrance so visitors approach it.
+    // Face the path, angled slightly toward the front so visitors approach it.
     group.rotation.y = facing * Math.PI * 0.5 - facing * 0.14;
     this.scene.add(group);
   }
@@ -179,30 +232,6 @@ export class Showroom {
     this.exhibit('craft', [6.6, 2.4, -7], -1, [3.0, 3.7]);
     this.exhibit('space', [-6.8, 3.0, -14], 1, [3.4, 4.6]);
     this.exhibit('trust', [6.9, 2.7, -21], -1, [3.1, 4.0]);
-  }
-
-  private buildBackLight(): void {
-    this.backlightMat = new THREE.ShaderMaterial({
-      vertexShader: backlightVert,
-      fragmentShader: backlightFrag,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      uniforms: {
-        uTime: { value: 0 },
-        uOpen: { value: 0 },
-        uExposure: { value: 1 },
-        uWarm: { value: new THREE.Color(0xffd6a0) },
-        uCool: { value: new THREE.Color(0x9fb6e0) },
-      },
-    });
-    this.track(this.backlightMat);
-
-    // Tall and narrow, standing on the floor — a doorway, not a panel.
-    const geo = this.track(new THREE.PlaneGeometry(7.5, 12));
-    const light = new THREE.Mesh(geo, this.backlightMat);
-    light.position.set(APERTURE.x, 5.4, APERTURE.z);
-    this.scene.add(light);
   }
 
   private buildMotes(): void {
@@ -238,9 +267,13 @@ export class Showroom {
     this.pointerTarget.set(x, y);
   }
 
-  /** Global page-scroll progress, 0 (entrance) .. 1 (deepest, before the light). */
+  /** Global page-scroll progress, 0 (front) .. 1 (deepest). */
   setScroll(progress: number): void {
     this.scroll = clamp01(progress);
+  }
+
+  setGravity(strength: number): void {
+    this.gravityTarget = Math.min(Math.max(strength, 0), 1.35);
   }
 
   private readonly resize = (): void => {
@@ -250,7 +283,19 @@ export class Showroom {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    if (this.gravityMat) this.gravityMat.uniforms.uAspect.value = this.camera.aspect;
   };
+
+  private updateGravityPlane(): void {
+    const distance = GRAVITY_EFFECT.planeDistance;
+    const height = 2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) * 0.5) * distance;
+    const width = height * this.camera.aspect;
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+
+    this.gravityPlane.position.copy(this.camera.position).addScaledVector(forward, distance);
+    this.gravityPlane.quaternion.copy(this.camera.quaternion);
+    this.gravityPlane.scale.set(width, height, 1);
+  }
 
   private readonly frame = (): void => {
     this.raf = requestAnimationFrame(this.frame);
@@ -258,6 +303,7 @@ export class Showroom {
 
     // Ease scroll and pointer for weighted, premium motion.
     this.scrollEased += (this.scroll - this.scrollEased) * 0.07;
+    this.gravity += (this.gravityTarget - this.gravity) * GRAVITY_EFFECT.ease;
     const ease = this.reduced ? 1 : 0.05;
     this.pointer.x += (this.pointerTarget.x - this.pointer.x) * ease;
     this.pointer.y += (this.pointerTarget.y - this.pointer.y) * ease;
@@ -267,26 +313,24 @@ export class Showroom {
     const s = this.scrollEased;
 
     // Walk into the showroom: dolly forward, passing the exhibits.
-    const targetZ = lerp(9, -18, s);
-    const targetY = lerp(1.7, 1.45, s);
-    this.camera.position.x += (px * 1.1 - this.camera.position.x) * 0.06;
-    this.camera.position.y += (targetY - py * 0.5 - this.camera.position.y) * 0.06;
+    const forward = this.waterParams.cameraForwardAmount;
+    const targetZ = lerp(9, 9 + (-27 * forward), s) - this.gravity * GRAVITY_EFFECT.cameraPull;
+    const targetY = lerp(1.7, 1.45, s) + this.gravity * GRAVITY_EFFECT.cameraLift;
+    this.camera.position.x += (px * 1.1 * this.waterParams.parallaxStrength - this.camera.position.x) * 0.06;
+    this.camera.position.y += (targetY - py * 0.5 * this.waterParams.parallaxStrength - this.camera.position.y) * 0.06;
     this.camera.position.z += (targetZ - this.camera.position.z) * 0.06;
-    this.camera.lookAt(px * 0.7, 1.4 + py * 0.3, -30);
+    this.camera.lookAt(px * 0.7, 1.4 + py * 0.3, FAR_Z);
     this.camPos.copy(this.camera.position);
 
-    // The doorway of light opens as we move in.
-    const open = smoothstep(0.04, 0.82, s);
     // Brightness stays full through Hero, then settles for Meaning and sinks
     // further for Issue so the words read strongly without cutting the space.
-    const exposure = 1 - 0.55 * smoothstep(0.3, 1, s);
+    const exposure = (1 - 0.55 * smoothstep(0.3, 1, s)) * (1 - this.gravity * GRAVITY_EFFECT.exposureDip);
 
     this.floorMat.uniforms.uTime.value = t;
-    this.floorMat.uniforms.uOpen.value = open;
     this.floorMat.uniforms.uExposure.value = exposure;
-    this.backlightMat.uniforms.uTime.value = t;
-    this.backlightMat.uniforms.uOpen.value = open;
-    this.backlightMat.uniforms.uExposure.value = exposure;
+    this.gravityMat.uniforms.uTime.value = t;
+    this.gravityMat.uniforms.uStrength.value = this.reduced ? 0 : this.gravity;
+    this.updateGravityPlane();
 
     // Drift the few motes gently upward through the light.
     const attr = this.motes.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -302,6 +346,7 @@ export class Showroom {
 
   start(): void {
     if (this.raf) return;
+    if (this.disposed) return;
     this.clock.start();
     this.frame();
   }
@@ -312,6 +357,7 @@ export class Showroom {
   }
 
   dispose(): void {
+    this.disposed = true;
     this.stop();
     window.removeEventListener('resize', this.resize);
     for (const d of this.disposables) d.dispose();

@@ -27,6 +27,7 @@ export default function ShowroomCanvas() {
     window.addEventListener('pointermove', onPointer, { passive: true });
 
     gsap.registerPlugin(ScrollTrigger);
+    const triggers: ScrollTrigger[] = [];
     const trigger = ScrollTrigger.create({
       trigger: document.body,
       start: 'top top',
@@ -34,10 +35,27 @@ export default function ShowroomCanvas() {
       scrub: true,
       onUpdate: (self) => scene.setScroll(self.progress),
     });
+    triggers.push(trigger);
+
+    const transitions = document.querySelectorAll<HTMLElement>('[data-section-transition]');
+    transitions.forEach((transition) => {
+      triggers.push(ScrollTrigger.create({
+        trigger: transition,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: true,
+        onUpdate: (self) => {
+          const pulse = Math.pow(Math.sin(self.progress * Math.PI), 0.72) * 1.25;
+          scene.setGravity(pulse);
+        },
+        onLeave: () => scene.setGravity(0),
+        onLeaveBack: () => scene.setGravity(0),
+      }));
+    });
 
     return () => {
       window.removeEventListener('pointermove', onPointer);
-      trigger.kill();
+      triggers.forEach((item) => item.kill());
       scene.dispose();
     };
   }, []);
