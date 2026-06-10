@@ -14,15 +14,15 @@ export function HeroScene({
     <Canvas
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       dpr={[1, 2]}
-      camera={{ position: [0.3, 0, CAM_START], fov: 50 }}
+      camera={{ position: [0.2, 0, CAM_START], fov: 50 }}
     >
       <HeroSceneScene progress={progress} reduced={reduced} />
       {!reduced && (
         <EffectComposer>
           <Bloom
-            intensity={0.32}
-            luminanceThreshold={0.45}
-            luminanceSmoothing={0.6}
+            intensity={0.4}
+            luminanceThreshold={0.5}
+            luminanceSmoothing={0.5}
             mipmapBlur
           />
         </EffectComposer>

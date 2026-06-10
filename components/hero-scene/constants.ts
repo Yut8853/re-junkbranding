@@ -1,31 +1,47 @@
 import * as THREE from 'three'
-import type { LayerDef } from '@/types/hero-scene'
+import type { LineDef, PanelDef } from '@/types/hero-scene'
 
-// 黒い空間 + 白い光。発光は控えめ（ネオン/ゲーム感を避ける）。
+// 黒に近い空間 + 白い光。発光は控えめ（ネオン/ゲーム感を避ける）。
 export const BG = '#06070b'
 export const INK = new THREE.Color('#c9ced8')
 export const WARM = new THREE.Color('#eef2f9')
-export const BLOOM_INK = new THREE.Color('#eaf0ff').multiplyScalar(1.5)
-export const BLOOM_WARM = new THREE.Color('#ffffff').multiplyScalar(1.7)
+export const BLOOM_INK = new THREE.Color('#eaf0ff').multiplyScalar(1.4)
+export const BLOOM_WARM = new THREE.Color('#ffffff').multiplyScalar(1.6)
 
-// カメラはゆっくり奥へ。派手に飛ばさないが、写真の中を一度だけ通り抜ける。
+// カメラは「平面のWebページ」を正面から眺める位置から、
+// 分解された層の“間”へ静かに入っていく。派手な飛行はしない。
 export const CAM_START = 6.0
-export const CAM_END = -2.5
+export const CAM_END = 3.2
 
-// 「写真の世界に入った瞬間」を作る区間（progress 基準）。
-// この間に主役写真が拡大して画面外へ抜け、奥の光と空気が現れ、Meaning へ渡す。
-export const ENTER_START = 0.24
-export const ENTER_END = 0.46
+// 分解（平面 → 奥行き空間）が進む区間。progress 基準。
+// Hero〜Bridge にかけて 0→1。スクロールに自然同期。
+export const EXPLODE_START = 0.04
+export const EXPLODE_END = 0.62
 
-// 写真は均等な板の列ではない。中央〜右に大きな主役の世界が1つ、
-// その奥に他業種の断片がごく薄く漂うだけ。Hero は業種一覧ではなく世界観の入口。
-export const LAYERS: LayerDef[] = [
-  // 主役：入り込む1枚の世界（大きく・近く・中央右）。
-  { photo: '/jp/cafe.png', role: 'main', pos: [1.9, 0, -0.8], rotY: -0.08, rotX: 0.01, h: 5.0, ar: 1.5, maxOpacity: 1 },
-  // 奥の断片：他業種の気配。薄く・小さく・深く。
-  { photo: '/jp/salon.png', role: 'fragment', pos: [-3.6, 1.8, -13.5], rotY: 0.22, rotX: 0.0, h: 2.0, ar: 0.82, maxOpacity: 0.24 },
-  { photo: '/jp/craft.png', role: 'fragment', pos: [4.4, -2.1, -16.5], rotY: -0.24, rotX: 0.02, h: 2.2, ar: 1.4, maxOpacity: 0.2 },
-  { photo: '/jp/clinic.png', role: 'fragment', pos: [-2.2, -1.4, -19.5], rotY: 0.18, rotX: 0.0, h: 2.0, ar: 1.45, maxOpacity: 0.16 },
+// Webページの中心位置（右側）。左側はコピーの安全領域として常に空ける。
+export const PAGE_X = 3.0
+
+// 1枚のWebページ。平面状態(flat)では写真・見出し・本文・CTA・背景が
+// 1枚に重なって見え、分解(depth/drift)で奥行きのある層へ解体される。
+// 写真は主役ではなく、ページを構成する1レイヤーとして扱う（1枚だけ）。
+export const PANELS: PanelDef[] = [
+  // 背景面：ページの土台。奥へ退いて空間の床になる。
+  { kind: 'bg', flat: [0, 0, 0], depth: -4.0, drift: [0, 0], size: [4.0, 6.0], opacity: 0.7 },
+  // 写真：ページ上部のビジュアル。中景へ。
+  { kind: 'photo', flat: [0, 1.55, 0.05], depth: -1.7, drift: [-0.35, 0.25], size: [3.3, 2.0], opacity: 1, photo: '/jp/cafe.png' },
+  // 見出し：手前へ浮き上がる。
+  { kind: 'heading', flat: [0, 0.05, 0.1], depth: 0.5, drift: [0.15, 0.05], size: [2.9, 0.7], opacity: 0.95 },
+  // 本文：さらに手前。
+  { kind: 'body', flat: [0, -0.95, 0.14], depth: 1.0, drift: [0.2, -0.1], size: [3.0, 1.2], opacity: 0.85 },
+  // CTA：最前面。
+  { kind: 'cta', flat: [-0.75, -2.05, 0.18], depth: 1.6, drift: [0.25, -0.15], size: [1.5, 0.5], opacity: 1 },
+]
+
+// 余白・導線。平面では見えず、分解とともに細い線として現れる。
+export const LINES: LineDef[] = [
+  { flat: [-1.75, -0.2, 0.08], depth: 0.3, drift: [-0.1, 0], size: [0.014, 5.2], opacity: 0.45 },
+  { flat: [0, 0.5, 0.08], depth: -0.5, drift: [0, 0.1], size: [3.3, 0.014], opacity: 0.4 },
+  { flat: [0.6, -1.2, 0.16], depth: 1.2, drift: [0.15, -0.05], size: [0.012, 2.0], opacity: 0.3 },
 ]
 
 export function smoothstep(edge0: number, edge1: number, x: number) {

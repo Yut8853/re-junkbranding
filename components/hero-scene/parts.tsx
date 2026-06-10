@@ -8,24 +8,28 @@ import {
   BLOOM_WARM,
   CAM_END,
   CAM_START,
-  ENTER_END,
-  ENTER_START,
+  EXPLODE_END,
+  EXPLODE_START,
   INK,
+  PAGE_X,
   smoothstep,
 } from '@/components/hero-scene/constants'
 import type {
   AtmosphereProps,
+  LineProps,
   MotionProps,
-  PhotoLayerProps,
+  PageGroupProps,
+  PanelProps,
 } from '@/types/hero-scene'
 
-// 主役＝入り込む1枚の世界。断片＝奥に薄く漂う他業種の気配。
-export function PhotoLayer({
-  def,
-  texture,
-  progress,
-  reduced,
-}: PhotoLayerProps) {
+// 0 = 平面のWebページ / 1 = 奥行きのある体験空間へ分解。
+function explodeAmount(p: number, reduced: boolean) {
+  return reduced ? p * 0.28 : smoothstep(EXPLODE_START, EXPLODE_END, p)
+}
+
+// ページを構成する1つの面（写真・見出し・本文・CTA・背景面）。
+// 平面状態から、スクロールに応じて奥行き方向へ静かに浮き上がる。
+export function Panel({ def, texture, progress, reduced }: PanelProps) {
   const group = useRef<THREE.Group>(null)
   const mat = useRef<THREE.MeshBasicMaterial>(null)
   const phase = useMemo(() => Math.random() * Math.PI * 2, [])
@@ -35,60 +39,95 @@ export function PhotoLayer({
     const m = mat.current
     if (!g || !m) return
     const p = progress.current
+    const explode = explodeAmount(p, reduced)
     const t = state.clock.elapsedTime
-    const baseTex = texture ? 1 : 0
-    const k = Math.min(1, delta * 4)
 
-    if (def.role === 'main') {
-      // 最初から世界が見えている → 近づく → 一度だけ中を通り抜けて画面外へ。
-      const intro = smoothstep(0, 0.04, p)
-      const approach = smoothstep(0, ENTER_START, p)
-      const enter = reduced ? 0 : smoothstep(ENTER_START, ENTER_END, p)
-      const pass = 1 - smoothstep(0.5, 1, enter)
+    // 分解後だけ、ごく弱い浮遊感を与える（生きた空間に見せる）。
+    const floatY = reduced ? 0 : Math.sin(t * 0.16 + phase) * 0.03 * explode
+    const floatX = reduced ? 0 : Math.cos(t * 0.13 + phase) * 0.02 * explode
 
-      const target = baseTex * intro * pass
-      m.opacity += (target - m.opacity) * k
+    g.position.x = def.flat[0] + def.drift[0] * explode + floatX
+    g.position.y = def.flat[1] + def.drift[1] * explode + floatY
+    g.position.z = def.flat[2] + def.depth * explode
 
-      const float = reduced ? 0 : Math.sin(t * 0.14 + phase) * 0.05
-      g.position.x = def.pos[0] + enter * 2.2
-      g.position.y = def.pos[1] + enter * 0.8 + float
-      g.position.z = def.pos[2] + approach * 0.5 + enter * 4.4
-      g.rotation.y = def.rotY - enter * 0.14
-      g.rotation.x = def.rotX
-      g.scale.setScalar(1 + approach * 0.1 + enter * 1.6)
-    } else {
-      // 断片：薄く立ち上がり、Meaning に向けて静かに消えていく。
-      const appear = smoothstep(0.02, 0.16, p)
-      const fade = 1 - smoothstep(0.32, 0.66, p)
-      const target = baseTex * def.maxOpacity * appear * fade
-      m.opacity += (target - m.opacity) * Math.min(1, delta * 3)
-
-      const float = reduced ? 0 : Math.sin(t * 0.1 + phase) * 0.05
-      g.position.x = def.pos[0]
-      g.position.y = def.pos[1] + float
-      g.position.z = def.pos[2] - p * 1.6
-    }
+    const ready = def.kind === 'photo' ? (texture ? 1 : 0) : 1
+    m.opacity += (def.opacity * ready - m.opacity) * Math.min(1, delta * 4)
   })
 
   return (
-    <group ref={group} position={def.pos} rotation={[def.rotX, def.rotY, 0]}>
-      <mesh scale={[def.h * def.ar, def.h, 1]}>
+    <group ref={group} position={def.flat}>
+      <mesh scale={[def.size[0], def.size[1], 1]}>
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
           ref={mat}
           map={texture ?? undefined}
           transparent
           opacity={0}
+          depthWrite={false}
           toneMapped={false}
           side={THREE.DoubleSide}
-          depthWrite={false}
         />
       </mesh>
     </group>
   )
 }
 
-// 空気としての塵。見せるためではなく、奥行きを感じさせるためだけに、ごく薄く。
+// 余白・導線。平面では見えず、分解とともに細い線として現れる。
+export function GuideLine({ def, progress, reduced }: LineProps) {
+  const group = useRef<THREE.Group>(null)
+  const mat = useRef<THREE.MeshBasicMaterial>(null)
+
+  useFrame((_, delta) => {
+    const g = group.current
+    const m = mat.current
+    if (!g || !m) return
+    const explode = explodeAmount(progress.current, reduced)
+    g.position.x = def.flat[0] + def.drift[0] * explode
+    g.position.y = def.flat[1] + def.drift[1] * explode
+    g.position.z = def.flat[2] + def.depth * explode
+    m.opacity += (def.opacity * explode - m.opacity) * Math.min(1, delta * 3)
+  })
+
+  return (
+    <group ref={group} position={def.flat}>
+      <mesh scale={[def.size[0], def.size[1], 1]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          ref={mat}
+          transparent
+          opacity={0}
+          color={INK}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+// Webページ全体のグループ。分解が進むほど、正面の平面から
+// 3/4ビューへ静かに回り込み、層の奥行き（地層）が見えるようにする。
+export function PageGroup({ progress, reduced, children }: PageGroupProps) {
+  const ref = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    const g = ref.current
+    if (!g) return
+    const explode = explodeAmount(progress.current, reduced)
+    const t = state.clock.elapsedTime
+    g.rotation.y = -0.1 - explode * 0.5
+    g.rotation.x = explode * 0.06
+    g.position.y = reduced ? 0 : Math.sin(t * 0.1) * 0.04
+  })
+
+  return (
+    <group ref={ref} position={[PAGE_X, 0, 0]}>
+      {children}
+    </group>
+  )
+}
+
+// 空気としての塵。見せるためではなく、奥行きを感じさせるためだけに極少量。
 export function Motes({
   progress,
   glow,
@@ -97,26 +136,17 @@ export function Motes({
   glow: THREE.Texture
 }) {
   const ref = useRef<THREE.InstancedMesh>(null)
-  const bloom = useRef<THREE.InstancedMesh>(null)
-  const count = 30
+  const count = 16
   const dummy = useMemo(() => new THREE.Object3D(), [])
-  const glowDummy = useMemo(() => new THREE.Object3D(), [])
   const data = useMemo(() => {
-    const arr: {
-      x: number
-      y: number
-      z: number
-      s: number
-      speed: number
-      phase: number
-    }[] = []
+    const arr: { x: number; y: number; z: number; s: number; speed: number; phase: number }[] = []
     for (let i = 0; i < count; i++) {
       arr.push({
-        x: (Math.random() - 0.5) * 9,
-        y: (Math.random() - 0.5) * 5.5,
-        z: CAM_START - Math.random() * 30,
-        s: 0.014 + Math.random() * 0.024,
-        speed: 0.4 + Math.random() * 0.7,
+        x: (Math.random() - 0.5) * 8,
+        y: (Math.random() - 0.5) * 5,
+        z: CAM_START - Math.random() * 16,
+        s: 0.012 + Math.random() * 0.018,
+        speed: 0.3 + Math.random() * 0.5,
         phase: Math.random() * Math.PI * 2,
       })
     }
@@ -125,201 +155,62 @@ export function Motes({
 
   useEffect(() => {
     const mesh = ref.current
-    const glowMesh = bloom.current
-    if (!mesh || !glowMesh) return
+    if (!mesh) return
     const col = new THREE.Color()
     data.forEach((d, i) => {
       dummy.position.set(d.x, d.y, d.z)
       dummy.scale.setScalar(d.s)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
-
-      glowDummy.position.set(d.x, d.y, d.z)
-      glowDummy.scale.setScalar(d.s * 2.2)
-      glowDummy.updateMatrix()
-      glowMesh.setMatrixAt(i, glowDummy.matrix)
-
       col.copy(BLOOM_INK)
       mesh.setColorAt(i, col)
-      glowMesh.setColorAt(i, col)
     })
     mesh.instanceMatrix.needsUpdate = true
-    glowMesh.instanceMatrix.needsUpdate = true
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
-    if (glowMesh.instanceColor) glowMesh.instanceColor.needsUpdate = true
-  }, [data, dummy, glowDummy])
+  }, [data, dummy])
 
   useFrame((state, delta) => {
     const mesh = ref.current
-    const glowMesh = bloom.current
-    if (!mesh || !glowMesh) return
+    if (!mesh) return
     const camZ = state.camera.position.z
-    const farZ = camZ - 32
+    const farZ = camZ - 18
     const nearZ = camZ + 2
-    const stream = reduced ? 0.12 : 0.4 + progress.current * 1.0
+    const stream = reduced ? 0.08 : 0.25 + progress.current * 0.5
+    const t = state.clock.elapsedTime
     data.forEach((d, i) => {
       d.z += delta * stream * d.speed
       if (d.z > nearZ) {
-        d.z = farZ - Math.random() * 6
-        d.x = (Math.random() - 0.5) * 9
-        d.y = (Math.random() - 0.5) * 5.5
+        d.z = farZ - Math.random() * 4
+        d.x = (Math.random() - 0.5) * 8
+        d.y = (Math.random() - 0.5) * 5
       }
-      const depth = THREE.MathUtils.clamp((d.z - farZ) / (nearZ - farZ), 0, 1)
-      const t = state.clock.elapsedTime
-      const drift = reduced ? 0 : Math.sin(t * 0.32 + d.phase) * 0.04
-
-      dummy.position.set(d.x + drift * depth, d.y - drift * 0.5 * depth, d.z)
-      const scale = d.s * (0.4 + depth * 1.6)
-      dummy.scale.setScalar(scale)
+      const drift = reduced ? 0 : Math.sin(t * 0.3 + d.phase) * 0.03
+      dummy.position.set(d.x + drift, d.y - drift * 0.4, d.z)
+      dummy.scale.setScalar(d.s)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
-
-      glowDummy.position.copy(dummy.position)
-      glowDummy.scale.setScalar(scale * (1.8 + depth * 1.6))
-      glowDummy.updateMatrix()
-      glowMesh.setMatrixAt(i, glowDummy.matrix)
     })
     mesh.instanceMatrix.needsUpdate = true
-    glowMesh.instanceMatrix.needsUpdate = true
   })
 
   return (
-    <>
-      <instancedMesh ref={bloom} args={[undefined, undefined, count]}>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial
-          map={glow}
-          transparent
-          opacity={0.16}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-          toneMapped={false}
-        />
-      </instancedMesh>
-      <instancedMesh ref={ref} args={[undefined, undefined, count]}>
-        <circleGeometry args={[1, 12]} />
-        <meshBasicMaterial
-          transparent
-          opacity={0.28}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-          toneMapped={false}
-        />
-      </instancedMesh>
-    </>
+    <instancedMesh ref={ref} args={[undefined, undefined, count]}>
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial
+        map={glow}
+        transparent
+        opacity={0.14}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
+    </instancedMesh>
   )
 }
 
-// 霧は奥だけ、ごく弱く。空気の層として感じる程度に。
-export function CloudField({
-  texture,
-  progress,
-  reduced,
-}: {
-  texture: THREE.Texture
-  progress: MotionProps['progress']
-  reduced: boolean
-}) {
-  const group = useRef<THREE.Group>(null)
-  const clouds = useMemo(() => {
-    return Array.from({ length: 3 }, () => ({
-      x: -10 + Math.random() * 20,
-      y: -3 + Math.random() * 6,
-      z: CAM_START - 16 - Math.random() * 22,
-      speed: 0.01 + Math.random() * 0.018,
-      stream: 0.12 + Math.random() * 0.24,
-      phase: Math.random() * Math.PI * 2,
-      layers: Array.from({ length: 5 + Math.round(Math.random() * 3) }, () => ({
-        x: (Math.random() - 0.5) * 4.4,
-        y: (Math.random() - 0.5) * 2.2,
-        z: (Math.random() - 0.5) * 3,
-        scale: 2 + Math.random() * 3,
-        aspect: 1.6 + Math.random() * 1.3,
-        angle: Math.random() * Math.PI * 2,
-        spin: (0.008 + Math.random() * 0.03) * (Math.random() > 0.5 ? 1 : -1),
-        opacity: 0.03 + Math.random() * 0.035,
-      })),
-    }))
-  }, [])
-
-  useFrame(({ clock, camera }, delta) => {
-    const g = group.current
-    if (!g) return
-    const time = clock.elapsedTime
-    const farZ = camera.position.z - 42
-    const nearZ = camera.position.z + 4
-    g.children.forEach((child, i) => {
-      const cloud = clouds[i]
-      const cluster = child as THREE.Group
-      const driftSpeed = reduced ? cloud.speed * 0.28 : cloud.speed
-      const streamSpeed =
-        reduced ? cloud.stream * 0.2 : cloud.stream * (0.8 + progress.current * 0.9)
-
-      cluster.position.x += delta * driftSpeed
-      cluster.position.z += delta * streamSpeed
-      if (cluster.position.x > 12) {
-        cluster.position.x = -12 - Math.random() * 4
-        cluster.position.y = -3 + Math.random() * 6
-      }
-      if (cluster.position.z > nearZ) {
-        cluster.position.x = -10 + Math.random() * 20
-        cluster.position.y = -3 + Math.random() * 6
-        cluster.position.z = farZ - Math.random() * 10
-      }
-
-      cluster.position.y = cloud.y + Math.sin(time * 0.06 + cloud.phase) * 0.3
-      cluster.rotation.y = Math.sin(time * 0.025 + cloud.phase) * 0.05
-      const depth = THREE.MathUtils.clamp((cluster.position.z - farZ) / (nearZ - farZ), 0, 1)
-      const depthFade = smoothstep(0.04, 0.26, depth) * (1 - smoothstep(0.78, 1, depth))
-
-      cluster.children.forEach((layerChild, j) => {
-        const layer = cloud.layers[j]
-        const mesh = layerChild as THREE.Mesh
-        const mat = mesh.material as THREE.MeshBasicMaterial
-        mesh.quaternion.copy(camera.quaternion)
-        mesh.rotateZ(layer.angle + time * (reduced ? layer.spin * 0.2 : layer.spin))
-        mat.opacity =
-          layer.opacity *
-          depthFade *
-          (0.84 + Math.sin(time * 0.1 + cloud.phase + j) * 0.16)
-      })
-    })
-  })
-
-  return (
-    <group ref={group}>
-      {clouds.map((cloud, i) => (
-        <group key={i} position={[cloud.x, cloud.y, cloud.z]}>
-          {cloud.layers.map((layer, j) => (
-            <mesh
-              key={j}
-              position={[layer.x, layer.y, layer.z]}
-              rotation={[0, 0, layer.angle]}
-              scale={[layer.scale * layer.aspect, layer.scale, 1]}
-            >
-              <planeGeometry args={[1, 1]} />
-              <meshBasicMaterial
-                map={texture}
-                transparent
-                opacity={layer.opacity}
-                depthWrite={false}
-                blending={THREE.NormalBlending}
-                color={INK}
-                toneMapped={false}
-              />
-            </mesh>
-          ))}
-        </group>
-      ))}
-    </group>
-  )
-}
-
-// カメラ：スクロールでゆっくり奥へ。写真の中を一度だけ通り抜ける旅程を支える。
-export function Rig({
-  progress,
-  reduced,
-}: MotionProps) {
+// カメラ：平面を眺める位置から、分解された層の“間”へ静かに入っていく。
+// 派手な飛行・スクロールジャックはしない。マウスはわずかな視差だけ。
+export function Rig({ progress, reduced }: MotionProps) {
   const { camera } = useThree()
   const mouse = useRef({ x: 0, y: 0 })
   const target = useRef({ x: 0, y: 0 })
@@ -337,58 +228,45 @@ export function Rig({
     const k = Math.min(1, delta * 2.2)
     const p = progress.current
     const t = state.clock.elapsedTime
-    const enter = smoothstep(ENTER_START, ENTER_END, p)
-    const autoX = Math.sin(t * 0.14) * 0.06
-    const autoY = Math.cos(t * 0.12) * 0.04
+    const autoX = Math.sin(t * 0.12) * 0.05
+    const autoY = Math.cos(t * 0.1) * 0.035
     mouse.current.x += (target.current.x + autoX - mouse.current.x) * k
     mouse.current.y += (target.current.y + autoY - mouse.current.y) * k
 
-    const z = reduced ? CAM_START - p * 1.2 : CAM_START + (CAM_END - CAM_START) * p
+    const sway = reduced ? 0.2 : 1
+    const z = reduced ? CAM_START - p * 0.8 : CAM_START + (CAM_END - CAM_START) * p
     camera.position.z += (z - camera.position.z) * k
 
-    // 通り抜ける瞬間だけ、わずかに主役側へ寄る（入り込む手応え）。
-    const baseX = 0.3 + enter * 0.5
-    const sway = reduced ? 0.2 : 1
-    camera.position.x += (baseX + mouse.current.x * 0.32 * sway - camera.position.x) * k
-    camera.position.y += (-mouse.current.y * 0.22 * sway - camera.position.y) * k
-    camera.rotation.y += (-mouse.current.x * 0.025 - camera.rotation.y) * k
-    camera.rotation.x += (mouse.current.y * 0.018 - camera.rotation.x) * k
+    const baseX = 0.2
+    camera.position.x += (baseX + mouse.current.x * 0.25 * sway - camera.position.x) * k
+    camera.position.y += (-mouse.current.y * 0.16 * sway - camera.position.y) * k
+    camera.rotation.y += (-mouse.current.x * 0.02 - camera.rotation.y) * k
+    camera.rotation.x += (mouse.current.y * 0.015 - camera.rotation.x) * k
   })
 
   return null
 }
 
-// 奥の光。写真の中を通り抜けた瞬間に立ち上がり、Meaning の静けさを照らす。
-export function Atmosphere({
-  progress,
-  glow,
-}: AtmosphereProps) {
+// 奥の光。分解された層の背後から差し込み、空間に奥行きを与える。
+// 画面全体は光らせず、「奥に光がある」と感じさせるだけ。
+export function Atmosphere({ progress, glow, reduced }: AtmosphereProps) {
   const mat = useRef<THREE.MeshBasicMaterial>(null)
-  const grp = useRef<THREE.Group>(null)
-  useFrame(({ camera }) => {
-    const p = progress.current
-    const enter = smoothstep(ENTER_START, ENTER_END, p)
-    const settle = 1 - smoothstep(0.62, 0.95, p)
-    if (mat.current) {
-      mat.current.opacity = (0.1 + enter * 0.46) * (0.5 + settle * 0.5)
-    }
-    if (grp.current) {
-      grp.current.position.z = Math.min(-10, camera.position.z - 6)
-    }
+  useFrame(() => {
+    const explode = explodeAmount(progress.current, reduced)
+    if (mat.current) mat.current.opacity = 0.06 + explode * 0.4
   })
   return (
-    <group ref={grp}>
-      <mesh position={[0.5, 0.1, 0]} scale={[30, 22, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial
-          ref={mat}
-          map={glow}
-          transparent
-          depthWrite={false}
-          color={BLOOM_WARM}
-          toneMapped={false}
-        />
-      </mesh>
-    </group>
+    <mesh position={[PAGE_X - 0.3, 0.2, -7]} scale={[26, 20, 1]}>
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial
+        ref={mat}
+        map={glow}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        color={BLOOM_WARM}
+        toneMapped={false}
+      />
+    </mesh>
   )
 }

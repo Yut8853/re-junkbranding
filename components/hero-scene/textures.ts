@@ -17,6 +17,66 @@ function roundRect(
   ctx.closePath()
 }
 
+function bar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+) {
+  roundRect(ctx, x, y, w, h, h / 2)
+  ctx.fillStyle = color
+  ctx.fill()
+}
+
+// Webページを構成する半透明の「ガラスの面」。見出し/本文/CTA/背景面を
+// 抽象化して描く。ブラウザchromeやSaaS風UIにはしない（普通のWebページの抽象）。
+export function makePanelTexture(
+  kind: 'bg' | 'heading' | 'body' | 'cta',
+  w: number,
+  h: number,
+) {
+  const px = 220
+  const W = Math.max(8, Math.round(w * px))
+  const H = Math.max(8, Math.round(h * px))
+  const c = document.createElement('canvas')
+  c.width = W
+  c.height = H
+  const ctx = c.getContext('2d')!
+  const pad = Math.min(W, H) * 0.08
+  const r = Math.min(W, H) * 0.06
+
+  // ガラスの土台：ごく薄い面 + 繊細な縁。
+  roundRect(ctx, 2, 2, W - 4, H - 4, r)
+  ctx.fillStyle = 'rgba(255,255,255,0.035)'
+  ctx.fill()
+  ctx.lineWidth = Math.max(1, Math.min(W, H) * 0.006)
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)'
+  ctx.stroke()
+
+  if (kind === 'heading') {
+    bar(ctx, pad, H * 0.26, W * 0.66, H * 0.2, 'rgba(228,233,245,0.92)')
+    bar(ctx, pad, H * 0.58, W * 0.42, H * 0.16, 'rgba(210,218,236,0.7)')
+  } else if (kind === 'body') {
+    const widths = [0.9, 0.82, 0.86, 0.58]
+    widths.forEach((wf, i) => {
+      bar(ctx, pad, H * (0.2 + i * 0.2), W * wf - pad * 2, H * 0.07, 'rgba(198,206,222,0.5)')
+    })
+  } else if (kind === 'cta') {
+    const ph = H * 0.6
+    roundRect(ctx, pad, H * 0.2, W - pad * 2, ph, ph / 2)
+    ctx.fillStyle = 'rgba(236,241,250,0.95)'
+    ctx.fill()
+    bar(ctx, W * 0.34, H * 0.44, W * 0.32, H * 0.12, 'rgba(16,20,28,0.62)')
+  }
+
+  const tex = new THREE.CanvasTexture(c)
+  tex.anisotropy = 8
+  tex.colorSpace = THREE.SRGBColorSpace
+  return tex
+}
+
 export function makePhotoTexture(
   img: HTMLImageElement | null,
   ar: number,
@@ -117,46 +177,4 @@ export function makeGlowTexture() {
   ctx.fillStyle = g
   ctx.fillRect(0, 0, S, S)
   return new THREE.CanvasTexture(c)
-}
-
-export function makeCloudTexture() {
-  const S = 512
-  const c = document.createElement('canvas')
-  c.width = S
-  c.height = S
-  const ctx = c.getContext('2d')!
-
-  for (let i = 0; i < 58; i++) {
-    const x = S * (0.16 + Math.random() * 0.68)
-    const y = S * (0.24 + Math.random() * 0.52)
-    const r = S * (0.07 + Math.random() * 0.13)
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r)
-    g.addColorStop(0, `rgba(255,255,255,${0.24 + Math.random() * 0.2})`)
-    g.addColorStop(0.48, `rgba(255,255,255,${0.16 + Math.random() * 0.12})`)
-    g.addColorStop(0.74, 'rgba(255,255,255,0.04)')
-    g.addColorStop(1, 'rgba(255,255,255,0)')
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, S, S)
-  }
-
-  ctx.globalCompositeOperation = 'destination-in'
-  const mask = ctx.createRadialGradient(
-    S / 2,
-    S / 2,
-    S * 0.12,
-    S / 2,
-    S / 2,
-    S * 0.46,
-  )
-  mask.addColorStop(0, 'rgba(255,255,255,1)')
-  mask.addColorStop(0.64, 'rgba(255,255,255,0.96)')
-  mask.addColorStop(0.84, 'rgba(255,255,255,0.34)')
-  mask.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.fillStyle = mask
-  ctx.fillRect(0, 0, S, S)
-  ctx.globalCompositeOperation = 'source-over'
-
-  const tex = new THREE.CanvasTexture(c)
-  tex.colorSpace = THREE.SRGBColorSpace
-  return tex
 }
