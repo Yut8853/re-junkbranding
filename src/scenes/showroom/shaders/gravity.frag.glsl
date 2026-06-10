@@ -3,7 +3,12 @@ precision highp float;
 varying vec2 vUv;
 
 uniform float uTime;
-uniform float uStrength;
+uniform float uGravity;
+uniform float uProgress;
+uniform float uStretchY;
+uniform float uDistortion;
+uniform float uLightColumn;
+uniform float uDirection;
 uniform float uAspect;
 
 float hash(vec2 p) {
@@ -24,24 +29,55 @@ float noise(vec2 p) {
 void main() {
   vec2 p = vUv - 0.5;
   p.x *= uAspect;
+  float absY = abs(p.y);
 
-  float pull = smoothstep(0.0, 0.5, vUv.y) * smoothstep(1.0, 0.5, vUv.y);
-  float axis = exp(-abs(p.x) * 5.2);
-  float wideField = exp(-abs(p.x) * 1.55);
-  float stretch = pow(abs(p.y) * 2.0, 1.08);
-  float vertical = smoothstep(0.02, 0.92, stretch);
-  float ripple = noise(vec2(p.x * 10.0, p.y * 24.0 - uTime * 0.9));
-  float striation = smoothstep(0.42, 0.9, ripple) * wideField;
+  float peak = pow(sin(clamp(uProgress, 0.0, 1.0) * 3.14159265), 0.72);
+  float reach = mix(0.085, 0.94, uStretchY);
+  float edgeSoftness = mix(0.045, 0.16, uStretchY);
+  float verticalMask = 1.0 - smoothstep(reach, reach + edgeSoftness, absY);
+  float centerSeed = 1.0 - smoothstep(0.0, 0.13, absY);
+  float movingTips = exp(-pow((absY - reach) / max(edgeSoftness, 0.001), 2.0));
+  float extensionTrace = smoothstep(0.0, reach, absY) * verticalMask;
+  float softTopBottom = smoothstep(0.0, 0.5, vUv.y) * smoothstep(1.0, 0.5, vUv.y);
 
-  float core = axis * (0.42 + vertical * 0.95);
-  float field = (core + striation * 0.46) * pull * uStrength;
-  float compression = smoothstep(0.28, 0.0, abs(p.y)) * wideField * uStrength;
+  float flowSpeed = mix(0.22, 1.18, uStretchY);
+  float flow = noise(vec2(
+    p.x * 16.0 + uDirection * uTime * 0.08,
+    p.y * mix(42.0, 13.0, uStretchY) - uTime * flowSpeed * uDirection
+  ));
 
-  vec3 cool = vec3(0.32, 0.56, 0.78);
-  vec3 warm = vec3(0.82, 0.68, 0.48);
-  vec3 col = mix(cool, warm, smoothstep(0.0, 0.55, abs(p.y)));
-  col *= field * 1.45 + compression * 0.56;
+  float bend = (flow - 0.5) * 0.1 * uDistortion * verticalMask;
+  float shear = p.y * 0.06 * uDistortion * uDirection * extensionTrace;
+  float distortedX = p.x + bend + shear;
 
-  float alpha = clamp(field * 1.08 + compression * 0.52, 0.0, 0.86);
+  float axis = exp(-abs(distortedX) * mix(18.0, 7.0, uStretchY));
+  float halo = exp(-abs(distortedX) * mix(8.0, 2.6, uStretchY));
+  float verticalGrain = smoothstep(0.48, 0.9, flow) * extensionTrace;
+  float coreColumn = axis * verticalMask;
+  float grownColumn = coreColumn * mix(centerSeed, 1.0, uStretchY);
+  float tipGlow = axis * movingTips * (0.35 + uStretchY * 0.65);
+  float sideTension = halo * verticalGrain * uStretchY;
+  float boundaryGate = uGravity * softTopBottom;
+
+  vec3 cool = vec3(0.30, 0.50, 0.70);
+  vec3 pale = vec3(0.58, 0.72, 0.86);
+  vec3 warm = vec3(0.78, 0.62, 0.42);
+  vec3 col = mix(cool, pale, axis);
+  col = mix(col, warm, movingTips * peak * 0.42);
+  col *= boundaryGate * uLightColumn * (
+    grownColumn * 1.22 +
+    tipGlow * 0.58 +
+    sideTension * 0.28
+  );
+
+  float alpha = clamp(
+    boundaryGate * (
+      grownColumn * 0.52 +
+      tipGlow * 0.34 +
+      sideTension * 0.16
+    ),
+    0.0,
+    0.58
+  );
   gl_FragColor = vec4(col, alpha);
 }

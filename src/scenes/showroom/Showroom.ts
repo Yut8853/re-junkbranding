@@ -12,6 +12,7 @@ const FAR_Z = -30;
 const GRAVITY_EFFECT = {
   planeDistance: 3,
   ease: 0.18,
+  progressEase: 0.14,
   cameraPull: 1.15,
   cameraLift: 0.34,
   exposureDip: 0.34,
@@ -19,6 +20,12 @@ const GRAVITY_EFFECT = {
 
 type WaterParams = {
   -readonly [K in keyof WaterPreset]: WaterPreset[K] extends boolean ? boolean : number;
+};
+
+export type GravityInput = {
+  strength: number;
+  progress: number;
+  direction: 1 | -1;
 };
 
 function clamp01(v: number): number {
@@ -48,7 +55,6 @@ function cloneDefaultWaterPreset(): WaterParams {
  * a background: it persists behind Hero, Meaning and Issue, dimming as it goes.
  */
 export class Showroom {
-  private readonly canvas: HTMLCanvasElement;
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene: THREE.Scene;
   private readonly camera: THREE.PerspectiveCamera;
@@ -72,10 +78,12 @@ export class Showroom {
   private readonly waterParams: WaterParams = cloneDefaultWaterPreset();
   private gravityTarget = 0;
   private gravity = 0;
+  private gravityProgressTarget = 0;
+  private gravityProgress = 0;
+  private gravityDirection: 1 | -1 = 1;
   private disposed = false;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.canvas = canvas;
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     this.renderer = new THREE.WebGLRenderer({
@@ -151,13 +159,18 @@ export class Showroom {
       blending: THREE.AdditiveBlending,
       uniforms: {
         uTime: { value: 0 },
-        uStrength: { value: 0 },
+        uGravity: { value: 0 },
+        uProgress: { value: 0 },
+        uStretchY: { value: 0 },
+        uDistortion: { value: 0 },
+        uLightColumn: { value: 0 },
+        uDirection: { value: 1 },
         uAspect: { value: 1 },
       },
     });
     this.track(this.gravityMat);
 
-    const geo = this.track(new THREE.PlaneGeometry(1, 1, 1, 1));
+    const geo = this.track(new THREE.PlaneGeometry(1, 1, 18, 42));
     this.gravityPlane = new THREE.Mesh(geo, this.gravityMat);
     this.gravityPlane.renderOrder = 20;
     this.scene.add(this.gravityPlane);
@@ -272,8 +285,10 @@ export class Showroom {
     this.scroll = clamp01(progress);
   }
 
-  setGravity(strength: number): void {
-    this.gravityTarget = Math.min(Math.max(strength, 0), 1.35);
+  setGravity(input: GravityInput): void {
+    this.gravityTarget = Math.min(Math.max(input.strength, 0), 1.18);
+    this.gravityProgressTarget = clamp01(input.progress);
+    this.gravityDirection = input.direction;
   }
 
   private readonly resize = (): void => {
@@ -304,6 +319,7 @@ export class Showroom {
     // Ease scroll and pointer for weighted, premium motion.
     this.scrollEased += (this.scroll - this.scrollEased) * 0.07;
     this.gravity += (this.gravityTarget - this.gravity) * GRAVITY_EFFECT.ease;
+    this.gravityProgress += (this.gravityProgressTarget - this.gravityProgress) * GRAVITY_EFFECT.progressEase;
     const ease = this.reduced ? 1 : 0.05;
     this.pointer.x += (this.pointerTarget.x - this.pointer.x) * ease;
     this.pointer.y += (this.pointerTarget.y - this.pointer.y) * ease;
@@ -311,11 +327,13 @@ export class Showroom {
     const px = this.reduced ? 0 : this.pointer.x;
     const py = this.reduced ? 0 : this.pointer.y;
     const s = this.scrollEased;
+    const gravityPeak = Math.pow(Math.sin(this.gravityProgress * Math.PI), 0.64);
+    const gravityStretch = this.gravity * gravityPeak;
 
     // Walk into the showroom: dolly forward, passing the exhibits.
     const forward = this.waterParams.cameraForwardAmount;
-    const targetZ = lerp(9, 9 + (-27 * forward), s) - this.gravity * GRAVITY_EFFECT.cameraPull;
-    const targetY = lerp(1.7, 1.45, s) + this.gravity * GRAVITY_EFFECT.cameraLift;
+    const targetZ = lerp(9, 9 + (-27 * forward), s) - gravityStretch * GRAVITY_EFFECT.cameraPull;
+    const targetY = lerp(1.7, 1.45, s) + gravityStretch * GRAVITY_EFFECT.cameraLift;
     this.camera.position.x += (px * 1.1 * this.waterParams.parallaxStrength - this.camera.position.x) * 0.06;
     this.camera.position.y += (targetY - py * 0.5 * this.waterParams.parallaxStrength - this.camera.position.y) * 0.06;
     this.camera.position.z += (targetZ - this.camera.position.z) * 0.06;
@@ -324,19 +342,24 @@ export class Showroom {
 
     // Brightness stays full through Hero, then settles for Meaning and sinks
     // further for Issue so the words read strongly without cutting the space.
-    const exposure = (1 - 0.55 * smoothstep(0.3, 1, s)) * (1 - this.gravity * GRAVITY_EFFECT.exposureDip);
+    const exposure = (1 - 0.55 * smoothstep(0.3, 1, s)) * (1 - gravityStretch * GRAVITY_EFFECT.exposureDip);
 
     this.floorMat.uniforms.uTime.value = t;
     this.floorMat.uniforms.uExposure.value = exposure;
     this.gravityMat.uniforms.uTime.value = t;
-    this.gravityMat.uniforms.uStrength.value = this.reduced ? 0 : this.gravity;
+    this.gravityMat.uniforms.uGravity.value = this.reduced ? 0 : this.gravity;
+    this.gravityMat.uniforms.uProgress.value = this.gravityProgress;
+    this.gravityMat.uniforms.uStretchY.value = this.reduced ? 0 : gravityPeak;
+    this.gravityMat.uniforms.uDistortion.value = this.reduced ? 0 : this.gravity * (0.12 + gravityPeak * 0.88);
+    this.gravityMat.uniforms.uLightColumn.value = this.reduced ? 0 : this.gravity;
+    this.gravityMat.uniforms.uDirection.value = this.gravityDirection;
     this.updateGravityPlane();
 
     // Drift the few motes gently upward through the light.
     const attr = this.motes.geometry.getAttribute('position') as THREE.BufferAttribute;
     const arr = attr.array as Float32Array;
     for (let i = 0; i < this.moteSpeeds.length; i++) {
-      arr[i * 3 + 1] += this.moteSpeeds[i] * 0.016;
+      arr[i * 3 + 1] += (this.moteSpeeds[i] + gravityStretch * 0.18) * 0.016;
       if (arr[i * 3 + 1] > 5) arr[i * 3 + 1] = 0.2;
     }
     attr.needsUpdate = true;

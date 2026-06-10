@@ -4,6 +4,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { Showroom } from './Showroom';
 
+function transitionStrength(progress: number): number {
+  return Math.pow(Math.sin(progress * Math.PI), 0.86);
+}
+
 /**
  * The Digital Showroom canvas — mounted once as a fixed, full-page background
  * that persists behind Hero, Meaning and Issue. A single ScrollTrigger maps
@@ -37,19 +41,25 @@ export default function ShowroomCanvas() {
     });
     triggers.push(trigger);
 
-    const transitions = document.querySelectorAll<HTMLElement>('[data-section-transition]');
-    transitions.forEach((transition) => {
+    const transitionPairs = document.querySelectorAll<HTMLElement>('[data-transition-from]');
+    transitionPairs.forEach((fromSection) => {
+      const toSection = fromSection.nextElementSibling as HTMLElement | null;
+      if (!toSection?.matches('[data-transition-to]')) return;
+
       triggers.push(ScrollTrigger.create({
-        trigger: transition,
-        start: 'top bottom',
+        trigger: fromSection,
+        start: 'top top',
         end: 'bottom top',
         scrub: true,
         onUpdate: (self) => {
-          const pulse = Math.pow(Math.sin(self.progress * Math.PI), 0.72) * 1.25;
-          scene.setGravity(pulse);
+          scene.setGravity({
+            strength: transitionStrength(self.progress),
+            progress: self.progress,
+            direction: self.direction >= 0 ? 1 : -1,
+          });
         },
-        onLeave: () => scene.setGravity(0),
-        onLeaveBack: () => scene.setGravity(0),
+        onLeave: () => scene.setGravity({ strength: 0, progress: 1, direction: 1 }),
+        onLeaveBack: () => scene.setGravity({ strength: 0, progress: 0, direction: -1 }),
       }));
     });
 

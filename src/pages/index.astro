@@ -3,7 +3,6 @@ import Base from '../layouts/Base.astro';
 import ShowroomCanvas from '../scenes/showroom/ShowroomCanvas';
 import Hero from '../components/Hero.astro';
 import Meaning from '../components/Meaning.astro';
-import Issue from '../components/Issue.astro';
 ---
 
 <Base>
@@ -12,18 +11,28 @@ import Issue from '../components/Issue.astro';
     <ShowroomCanvas client:load />
   </div>
 
+  <svg class="gravity-filter-defs" aria-hidden="true" focusable="false">
+    <filter id="gravity-section-displace">
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.012 0.085"
+        numOctaves="2"
+        seed="8"
+        result="gravityNoise"
+      />
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="gravityNoise"
+        scale="0"
+        xChannelSelector="R"
+        yChannelSelector="B"
+      />
+    </filter>
+  </svg>
+
   <main class="page">
     <Hero />
-    <div class="scene-transition" data-section-transition="hero-meaning" aria-hidden="true">
-      <div class="scene-transition__field"></div>
-      <div class="scene-transition__axis"></div>
-    </div>
     <Meaning />
-    <div class="scene-transition" data-section-transition="meaning-issue" aria-hidden="true">
-      <div class="scene-transition__field"></div>
-      <div class="scene-transition__axis"></div>
-    </div>
-    <Issue />
   </main>
 </Base>
 
@@ -41,76 +50,63 @@ import Issue from '../components/Issue.astro';
     height: 100%;
   }
 
+  .gravity-filter-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
   .page {
     position: relative;
     z-index: 1;
     perspective: 900px;
+    isolation: isolate;
+    --blend-overlap: clamp(8rem, 34vh, 22rem);
   }
 
   .page > section {
     transform-style: preserve-3d;
   }
 
-  .scene-transition {
+  [data-transition-from],
+  [data-transition-to] {
     position: relative;
-    height: clamp(26rem, 86vh, 58rem);
-    margin-block: min(-14vh, -3.5rem);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .scene-transition__field,
-  .scene-transition__axis {
-    position: sticky;
-    top: 0;
-    height: 100svh;
-    opacity: 0;
     transform-origin: 50% 50%;
-    will-change: opacity, transform, filter;
+    will-change: clip-path, transform, opacity, filter;
+    filter: url("#gravity-section-displace");
   }
 
-  .scene-transition__field {
-    background:
-      radial-gradient(
-        40% 78% at 50% 50%,
-        rgba(127, 159, 194, 0.46) 0%,
-        rgba(80, 111, 140, 0.34) 18%,
-        rgba(4, 5, 8, 0.82) 46%,
-        rgba(4, 5, 8, 0) 100%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(4, 5, 8, 0) 0%,
-        rgba(4, 5, 8, 0.9) 48%,
-        rgba(4, 5, 8, 0) 100%
-      );
-    filter: blur(3px);
+  [data-transition-from] {
+    z-index: 2;
+    margin-bottom: calc(var(--blend-overlap) * -1);
+    clip-path: inset(0 0 0% 0);
   }
 
-  .scene-transition__axis {
-    margin-top: -100svh;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(127, 159, 194, 0) 0%,
-        rgba(127, 159, 194, 0.38) 40%,
-        rgba(255, 214, 160, 0.36) 50%,
-        rgba(127, 159, 194, 0.38) 60%,
-        rgba(127, 159, 194, 0) 100%
-      );
-    clip-path: inset(0 44%);
-    filter: blur(18px);
+  [data-transition-to] {
+    z-index: 3;
+    padding-top: var(--blend-overlap);
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+    transform: translate3d(0, 3.5rem, 0);
+    opacity: 0.88;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .scene-transition {
-      height: 12vh;
-      margin-block: 0;
+    [data-transition-from],
+    [data-transition-to] {
+      clip-path: none;
+      transform: none;
+      opacity: 1;
+      filter: none;
     }
 
-    .scene-transition__field,
-    .scene-transition__axis {
-      display: none;
+    [data-transition-from] {
+      margin-bottom: 0;
+    }
+
+    [data-transition-to] {
+      padding-top: 0;
     }
   }
 </style>
@@ -121,7 +117,8 @@ import Issue from '../components/Issue.astro';
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const els = document.querySelectorAll<HTMLElement>('[data-reveal]');
-  const transitions = document.querySelectorAll<HTMLElement>('[data-section-transition]');
+  const hero = document.querySelector<HTMLElement>('[data-transition-from="hero"]');
+  const meaning = document.querySelector<HTMLElement>('[data-transition-to="meaning"]');
 
   if (reduced) {
     els.forEach((el) => {
@@ -131,6 +128,8 @@ import Issue from '../components/Issue.astro';
   } else {
     gsap.registerPlugin(ScrollTrigger);
     els.forEach((el) => {
+      if (el.closest('[data-transition-to]')) return;
+
       const delay = Number(el.dataset.revealDelay ?? 0);
       gsap.fromTo(
         el,
@@ -150,54 +149,62 @@ import Issue from '../components/Issue.astro';
       );
     });
 
-    transitions.forEach((transition) => {
-      const prev = transition.previousElementSibling as HTMLElement | null;
-      const next = transition.nextElementSibling as HTMLElement | null;
-      const prevContent = prev?.querySelector<HTMLElement>(':scope > :not([aria-hidden="true"])');
-      const nextContent = next?.querySelector<HTMLElement>(':scope > :not([aria-hidden="true"])');
-      const field = transition.querySelector<HTMLElement>('.scene-transition__field');
-      const axis = transition.querySelector<HTMLElement>('.scene-transition__axis');
-
-      if (!prevContent || !nextContent || !field || !axis) return;
+    if (hero && meaning) {
+      const heroScrim = hero.querySelector<HTMLElement>('.hero__scrim');
+      const heroContent = hero.querySelector<HTMLElement>('.hero__inner');
+      const meaningContent = meaning.querySelector<HTMLElement>('.meaning__inner');
+      const displacement = document.querySelector<SVGFEDisplacementMapElement>(
+        '#gravity-section-displace feDisplacementMap',
+      );
+      const heroOpen = 'polygon(0% 0%, 100% 0%, 100% 100%, 82% 100%, 68% 100%, 56% 100%, 50% 100%, 44% 100%, 32% 100%, 18% 100%, 0% 100%)';
+      const heroPulled = 'polygon(0% 0%, 100% 0%, 100% 86%, 82% 84%, 68% 93%, 56% 74%, 50% 100%, 44% 74%, 32% 93%, 18% 84%, 0% 86%)';
+      const heroRelease = 'polygon(0% 0%, 100% 0%, 100% 48%, 82% 50%, 68% 46%, 56% 56%, 50% 62%, 44% 56%, 32% 46%, 18% 50%, 0% 48%)';
+      const meaningHidden = 'polygon(0% 100%, 18% 100%, 32% 100%, 44% 100%, 50% 100%, 56% 100%, 68% 100%, 82% 100%, 100% 100%, 100% 100%, 0% 100%)';
+      const meaningPulled = 'polygon(0% 24%, 18% 20%, 32% 8%, 44% 30%, 50% 0%, 56% 30%, 68% 8%, 82% 20%, 100% 24%, 100% 100%, 0% 100%)';
+      const meaningOpen = 'polygon(0% 0%, 18% 0%, 32% 0%, 44% 0%, 50% 0%, 56% 0%, 68% 0%, 82% 0%, 100% 0%, 100% 100%, 0% 100%)';
 
       const tl = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
-          trigger: transition,
-          start: 'top bottom',
+          trigger: hero,
+          start: 'top top',
           end: 'bottom top',
           scrub: true,
         },
       });
 
       tl.fromTo(
-        field,
-        { autoAlpha: 0, scaleY: 0.08, scaleX: 1.26, filter: 'blur(0px)' },
-        { autoAlpha: 1, scaleY: 2.75, scaleX: 0.84, filter: 'blur(5px)', duration: 0.42 },
+        hero,
+        { clipPath: heroOpen, y: 0, scaleY: 1 },
+        { clipPath: heroPulled, y: -8, scaleY: 1.035, duration: 0.5 },
         0,
       )
-        .to(field, { autoAlpha: 0.88, scaleY: 3.4, scaleX: 0.78, filter: 'blur(11px)', duration: 0.2 }, 0.42)
-        .to(field, { autoAlpha: 0, scaleY: 0.62, scaleX: 1.22, filter: 'blur(18px)', duration: 0.34 }, 0.66)
+        .to(hero, { clipPath: heroRelease, y: -34, scaleY: 0.985, duration: 0.5 }, 0.5)
+        .to(displacement, { attr: { scale: 42 }, duration: 0.5 }, 0)
+        .to(displacement, { attr: { scale: 0 }, duration: 0.5 }, 0.5)
         .fromTo(
-          axis,
-          { autoAlpha: 0, scaleY: 0.04, scaleX: 2.0 },
-          { autoAlpha: 1, scaleY: 5.4, scaleX: 0.72, duration: 0.44 },
-          0.02,
-        )
-        .to(axis, { autoAlpha: 0.75, scaleY: 6.2, scaleX: 0.56, duration: 0.18 }, 0.44)
-        .to(axis, { autoAlpha: 0, scaleY: 0.5, scaleX: 2.2, duration: 0.36 }, 0.64)
-        .fromTo(
-          prevContent,
-          { autoAlpha: 1, y: 0, z: 0, scale: 1, filter: 'blur(0px)' },
-          { autoAlpha: 0.22, y: -112, z: 220, scaleY: 1.3, scaleX: 0.94, filter: 'blur(8px)', duration: 0.56 },
+          meaning,
+          { clipPath: meaningHidden, y: 56, scaleY: 0.96, autoAlpha: 0.88 },
+          { clipPath: meaningPulled, y: 10, scaleY: 1.045, autoAlpha: 1, duration: 0.5 },
           0,
         )
+        .to(meaning, { clipPath: meaningOpen, y: 0, scaleY: 1, duration: 0.5 }, 0.5)
+        .to(heroScrim, { scaleY: 1.26, transformOrigin: '50% 78%', autoAlpha: 0.86, duration: 0.5 }, 0.12)
+        .to(heroScrim, { scaleY: 0.82, autoAlpha: 0.34, duration: 0.42 }, 0.58)
         .fromTo(
-          nextContent,
-          { autoAlpha: 0.18, y: 132, z: -220, scaleY: 0.68, scaleX: 1.08, filter: 'blur(9px)' },
-          { autoAlpha: 1, y: 0, z: 0, scaleY: 1, scaleX: 1, filter: 'blur(0px)', duration: 0.56 },
-          0.5,
-        );
-    });
+          heroContent,
+          { y: 0, scaleY: 1, skewY: 0, autoAlpha: 1 },
+          { y: -34, scaleY: 1.08, skewY: -1.2, autoAlpha: 0.72, duration: 0.5 },
+          0,
+        )
+        .to(heroContent, { y: -64, scaleY: 0.96, skewY: 0, autoAlpha: 0.22, duration: 0.5 }, 0.5)
+        .fromTo(
+          meaningContent,
+          { y: 42, scaleY: 0.92, skewY: 1.1, autoAlpha: 0.58 },
+          { y: -8, scaleY: 1.08, skewY: -0.7, autoAlpha: 1, duration: 0.5 },
+          0.28,
+        )
+        .to(meaningContent, { y: 0, scaleY: 1, skewY: 0, duration: 0.36 }, 0.64);
+    }
   }
 </script>
