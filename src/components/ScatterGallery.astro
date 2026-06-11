@@ -25,11 +25,12 @@ const placements = [
   <div class="scatter__inner">
     <div class="scatter__stage" aria-hidden="true">
       {panels.map((panel, index) => (
-        <canvas
+        <img
           class="scatter__panel"
-          width="1024"
-          height="576"
-          aria-label={panel.alt}
+          src={panel.src}
+          alt={panel.alt}
+          loading="lazy"
+          decoding="async"
           data-src={panel.src}
           data-scatter-panel
           data-glitch-panel
@@ -37,7 +38,7 @@ const placements = [
           data-y={placements[index][1]}
           data-rotate={placements[index][2]}
           data-scale={placements[index][3]}
-        ></canvas>
+        />
       ))}
     </div>
   </div>
@@ -73,6 +74,7 @@ const placements = [
     top: 50%;
     width: clamp(12rem, 26vw, 34rem);
     aspect-ratio: 16 / 9;
+    object-fit: cover;
     border: 1px solid rgba(225, 238, 255, 0.16);
     border-radius: 2px;
     background: rgba(5, 8, 12, 0.76);

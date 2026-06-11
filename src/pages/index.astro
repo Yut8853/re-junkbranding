@@ -5,6 +5,8 @@ import Hero from '../components/Hero.astro';
 import Meaning from '../components/Meaning.astro';
 import Issue from '../components/Issue.astro';
 import ScatterGallery from '../components/ScatterGallery.astro';
+import ServicesIndex from '../components/ServicesIndex.astro';
+import FinalCta from '../components/FinalCta.astro';
 ---
 
 <Base>
@@ -22,6 +24,8 @@ import ScatterGallery from '../components/ScatterGallery.astro';
     <Meaning />
     <Issue />
     <ScatterGallery />
+    <ServicesIndex />
+    <FinalCta />
   </main>
 
   <button
@@ -422,14 +426,33 @@ import ScatterGallery from '../components/ScatterGallery.astro';
   const scatterPanelsOf = (gallery: HTMLElement) =>
     Array.from(gallery.querySelectorAll<HTMLElement>('[data-scatter-panel]'));
 
-  const initGlitchPanel = (canvas: HTMLCanvasElement, allowHover: boolean) => {
+  const initGlitchOverlay = (panels: HTMLElement[], allowHover: boolean) => {
+    if (!panels.length) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 576;
+    Object.assign(canvas.style, {
+      position: 'fixed',
+      left: '0',
+      top: '0',
+      width: '0',
+      height: '0',
+      zIndex: '18',
+      pointerEvents: 'none',
+      opacity: '0',
+      border: '1px solid rgba(225, 238, 255, 0.16)',
+      borderRadius: '2px',
+      boxShadow: '0 1.4rem 3.2rem rgba(0, 0, 0, 0.34), 0 0 2.4rem rgba(188, 239, 255, 0.08)',
+    });
+    document.body.append(canvas);
+
     const gl = canvas.getContext('webgl', {
       antialias: false,
       alpha: false,
       premultipliedAlpha: false,
     });
-    const src = canvas.dataset.src;
-    if (!gl || !src) return;
+    if (!gl) return;
 
     const vertex = `
       attribute vec2 aPosition;
@@ -564,7 +587,18 @@ import ScatterGallery from '../components/ScatterGallery.astro';
     let hover = 0;
     let raf = 0;
     let imageReady = false;
+    let activePanel: HTMLElement | null = null;
+    let activeSrc = '';
     const image = new Image();
+
+    const positionCanvas = () => {
+      if (!activePanel) return;
+      const rect = activePanel.getBoundingClientRect();
+      canvas.style.left = `${rect.left}px`;
+      canvas.style.top = `${rect.top}px`;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+    };
 
     const render = (time: number) => {
       hover += (targetHover - hover) * 0.14;
@@ -573,6 +607,8 @@ import ScatterGallery from '../components/ScatterGallery.astro';
         return;
       }
 
+      positionCanvas();
+      canvas.style.opacity = String(Math.min(1, hover * 1.18));
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform1f(uniforms.hover, hover);
       gl.uniform1f(uniforms.time, time * 0.001);
@@ -582,6 +618,9 @@ import ScatterGallery from '../components/ScatterGallery.astro';
         raf = requestAnimationFrame(render);
       } else {
         raf = 0;
+        canvas.style.opacity = '0';
+        canvas.style.width = '0';
+        canvas.style.height = '0';
       }
     };
 
@@ -596,18 +635,29 @@ import ScatterGallery from '../components/ScatterGallery.astro';
       gl.uniform2f(uniforms.imageSize, image.naturalWidth, image.naturalHeight);
       requestRender();
     };
-    image.src = src;
 
-    if (allowHover) {
-      canvas.addEventListener('pointerenter', () => {
+    if (!allowHover) return;
+
+    panels.forEach((panel) => {
+      panel.addEventListener('pointerenter', () => {
+        const src = panel.dataset.src;
+        if (!src) return;
+        activePanel = panel;
+        positionCanvas();
+        imageReady = src === activeSrc && imageReady;
+        if (src !== activeSrc) {
+          activeSrc = src;
+          imageReady = false;
+          image.src = src;
+        }
         targetHover = 1;
         requestRender();
       });
-      canvas.addEventListener('pointerleave', () => {
+      panel.addEventListener('pointerleave', () => {
         targetHover = 0;
         requestRender();
       });
-    }
+    });
   };
 
   const settleScatterGallery = (gallery: HTMLElement) => {
@@ -622,9 +672,25 @@ import ScatterGallery from '../components/ScatterGallery.astro';
     });
   };
 
-  document
-    .querySelectorAll<HTMLCanvasElement>('[data-glitch-panel]')
-    .forEach((canvas) => initGlitchPanel(canvas, !reduced));
+  const glitchPanels = Array.from(document.querySelectorAll<HTMLElement>('[data-glitch-panel]'));
+  let glitchOverlayReady = false;
+  const bootGlitchOverlay = (initialPanel?: HTMLElement, initialEvent?: PointerEvent) => {
+    if (glitchOverlayReady || reduced) return;
+    glitchOverlayReady = true;
+    initGlitchOverlay(glitchPanels, true);
+
+    if (initialPanel && initialEvent) {
+      initialPanel.dispatchEvent(new PointerEvent('pointerenter', initialEvent));
+    }
+  };
+
+  glitchPanels.forEach((panel) => {
+    panel.addEventListener(
+      'pointerenter',
+      (event) => bootGlitchOverlay(panel, event),
+      { once: true },
+    );
+  });
 
   if (musicToggle && musicLoop) {
     let fadeFrame = 0;

@@ -1,0 +1,305 @@
+---
+const serviceGroups = [
+  {
+    title: 'Webサイト制作',
+    items: [
+      'コーポレートサイト制作',
+      'ブランドサイト制作',
+      'サービスサイト制作',
+      '採用サイト制作',
+      '店舗・施設サイト制作',
+      'ポートフォリオサイト制作',
+      'キャンペーンサイト制作',
+      '商品紹介サイト制作',
+      'リニューアル制作',
+    ],
+  },
+  {
+    title: 'LP制作',
+    items: [
+      '商品LP',
+      'サービスLP',
+      '採用LP',
+      '広告用LP',
+      'キャンペーンLP',
+      'セミナー・イベントLP',
+      '問い合わせ獲得用LP',
+    ],
+  },
+  {
+    title: 'CMS構築・更新しやすいサイト制作',
+    items: [
+      'WordPressサイト制作',
+      'WordPressテーマ実装',
+      '既存WordPressサイト修正',
+      'Movable Typeサイト制作',
+      'Movable Typeテンプレート修正',
+      'Drupalサイト制作',
+      'Drupalサイト修正',
+      'お知らせ・ブログ機能追加',
+      'カスタム投稿設計',
+      '管理画面の使いやすさ改善',
+      'CMS更新代行',
+      'CMS移行相談',
+    ],
+  },
+  {
+    title: '体験型Web・演出サイト',
+    items: [
+      'WebGLを使った演出サイト',
+      'Three.jsを使った3D表現',
+      'GSAPアニメーション実装',
+      'スクロール連動アニメーション',
+      '動画・画像を活かしたギャラリー表現',
+      'ローディング演出',
+      'マウス追従エフェクト',
+      'ブランドの世界観を伝えるインタラクティブ表現',
+    ],
+  },
+  {
+    title: '既存サイトの改善',
+    items: [
+      '既存サイトのデザイン改善',
+      '既存サイトへのアニメーション追加',
+      'ファーストビュー改善',
+      'メインビジュアル改善',
+      'スマホ表示改善',
+      '表示崩れ修正',
+      '導線改善',
+      '問い合わせ率改善',
+      '表示速度改善',
+      'SEO基本改善',
+    ],
+  },
+  {
+    title: 'フロントエンド実装',
+    items: [
+      'HTML / CSS / JavaScript実装',
+      'Astro実装',
+      'Next.js実装',
+      'React実装',
+      'TypeScript実装',
+      'SCSS設計',
+      'レスポンシブ対応',
+      '静的サイト構築',
+      'Vercelデプロイ',
+      'アニメーション実装',
+    ],
+  },
+  {
+    title: 'SEO・解析まわり',
+    items: [
+      'title / description 設計',
+      '見出し構造の整理',
+      'OGP設定',
+      '画像最適化',
+      '構造化データ対応',
+      'Google Search Console設定',
+      'GA4設定',
+      '基本的なSEO設計',
+      'クロール・インデックス改善相談',
+    ],
+  },
+  {
+    title: 'Webデザイン・画像制作',
+    items: [
+      'Webデザイン',
+      'LPデザイン',
+      'バナーデザイン',
+      'SNS画像制作',
+      'アイキャッチ画像制作',
+      'KV / メインビジュアル制作',
+      'Figmaデザイン作成',
+      '既存デザインのブラッシュアップ',
+    ],
+  },
+  {
+    title: '紙媒体・営業ツール',
+    items: [
+      'チラシ制作',
+      'フライヤー制作',
+      '名刺制作',
+      'ショップカード制作',
+      'パンフレット制作',
+      '会社案内制作',
+      '営業資料制作',
+      '採用資料制作',
+      '提案資料制作',
+      'ポスター制作',
+      'メニュー表制作',
+      'DM / はがき制作',
+    ],
+  },
+  {
+    title: '小規模事業者向けサポート',
+    items: [
+      'ホームページ新規制作',
+      '古いサイトのリニューアル',
+      '事業内容の整理',
+      'サイトに載せる文章の整理',
+      '写真や素材の見せ方相談',
+      'Webと紙媒体を合わせた販促相談',
+      'Webまわりの相談全般',
+    ],
+  },
+];
+---
+
+<section class="section services">
+  <div class="services__inner">
+    <header class="services__head" data-reveal>
+      <p class="services__label">Service Index</p>
+      <h2 class="services__title">できること</h2>
+    </header>
+
+    <div class="services__grid">
+      {serviceGroups.map((group, index) => (
+        <section class="services__group" data-reveal data-reveal-delay={String(index * 0.035)}>
+          <div class="services__group-title">
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <h3>{group.title}</h3>
+          </div>
+          <ul class="services__list">
+            {group.items.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style lang="scss">
+  .services {
+    position: relative;
+    min-height: 100svh;
+    padding-block: clamp(9rem, 18vh, 14rem);
+    padding-inline: var(--gutter);
+  }
+
+  .services__inner {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 1320px);
+    margin-inline: auto;
+  }
+
+  .services__head {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.34fr) 1fr;
+    gap: clamp(1.25rem, 4vw, 4rem);
+    align-items: end;
+    margin-bottom: clamp(2.5rem, 7vw, 5.5rem);
+    border-bottom: 1px solid rgba(226, 238, 255, 0.18);
+    padding-bottom: clamp(1.4rem, 3vw, 2.2rem);
+  }
+
+  .services__label {
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: rgba(188, 239, 255, 0.72);
+  }
+
+  .services__title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.65rem, 4vw, 3.65rem);
+    font-weight: 600;
+    line-height: 1.28;
+    letter-spacing: 0.02em;
+    color: #fff;
+    text-align: right;
+  }
+
+  .services__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(2rem, 5vw, 5rem);
+    row-gap: 0;
+  }
+
+  .services__group {
+    display: grid;
+    grid-template-columns: minmax(9rem, 0.34fr) 1fr;
+    gap: clamp(1rem, 2.6vw, 2.2rem);
+    border-top: 1px solid rgba(226, 238, 255, 0.14);
+    padding-block: clamp(1.1rem, 2.4vw, 1.8rem);
+  }
+
+  .services__group-title {
+    display: flex;
+    gap: 0.8rem;
+    align-items: baseline;
+    min-width: 0;
+  }
+
+  .services__group-title span {
+    flex: 0 0 auto;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    color: rgba(188, 239, 255, 0.6);
+  }
+
+  .services__group-title h3 {
+    margin: 0;
+    font-size: clamp(0.82rem, 1.1vw, 1rem);
+    font-weight: 600;
+    line-height: 1.55;
+    color: rgba(248, 251, 255, 0.94);
+  }
+
+  .services__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.46rem 0.9rem;
+    align-content: start;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .services__list li {
+    position: relative;
+    padding-left: 0.75rem;
+    font-size: clamp(0.78rem, 0.96vw, 0.92rem);
+    line-height: 1.7;
+    color: rgba(214, 222, 236, 0.76);
+    white-space: nowrap;
+  }
+
+  .services__list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.78em;
+    width: 0.28rem;
+    height: 1px;
+    background: rgba(188, 239, 255, 0.56);
+  }
+
+  @media (max-width: 980px) {
+    .services__head,
+    .services__grid,
+    .services__group {
+      grid-template-columns: 1fr;
+    }
+
+    .services__title {
+      text-align: left;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .services {
+      padding-block: 7rem;
+    }
+
+    .services__list li {
+      white-space: normal;
+    }
+  }
+</style>
