@@ -73,6 +73,11 @@ import FinalCta from '../components/FinalCta.astro';
     </svg>
   </button>
 
+  <p class="music-notice" data-music-notice>
+    <span class="music-notice__dot" aria-hidden="true"></span>
+    画面を操作すると音楽が流れます。右下のボタンでON / OFFできます
+  </p>
+
   <audio data-music-loop src="/noctiluca_night_sea_loop.wav" preload="none" loop></audio>
 </Base>
 
@@ -179,6 +184,54 @@ import FinalCta from '../components/FinalCta.astro';
       background 0.28s ease,
       transform 0.28s ease,
       box-shadow 0.28s ease;
+  }
+
+  .music-notice {
+    position: fixed;
+    left: max(1.1rem, env(safe-area-inset-left));
+    bottom: max(1.1rem, env(safe-area-inset-bottom));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 0.55em;
+    max-width: min(72vw, 24rem);
+    margin: 0;
+    padding: 0.62rem 0.95rem;
+    border: 1px solid rgba(225, 238, 255, 0.16);
+    border-radius: 999px;
+    color: rgba(232, 240, 255, 0.78);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+    background:
+      radial-gradient(circle at 18% 35%, rgba(235, 244, 255, 0.14), transparent 60%),
+      rgba(7, 7, 11, 0.54);
+    box-shadow:
+      0 0.8rem 2rem rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+    pointer-events: none;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+  }
+
+  .music-notice__dot {
+    flex: none;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: rgba(214, 234, 255, 0.92);
+    box-shadow: 0 0 0.7rem rgba(214, 234, 255, 0.65);
+    animation: musicPulse 2.4s ease-in-out infinite;
+  }
+
+  .music-notice.is-hidden {
+    opacity: 0;
+    transform: translateY(0.6rem);
   }
 
   .music-toggle:hover {
@@ -713,21 +766,62 @@ import FinalCta from '../components/FinalCta.astro';
     musicLoop.volume = 0;
     setMusicState(false);
 
-    musicToggle.addEventListener('click', () => {
-      const shouldPlay = musicLoop.paused;
+    const musicNotice = document.querySelector<HTMLElement>('[data-music-notice]');
+    const hideMusicNotice = () => musicNotice?.classList.add('is-hidden');
 
-      if (shouldPlay) {
-        setMusicState(true);
-        fadeVolume(0.42);
-        void musicLoop.play().catch(() => {
-          setMusicState(false);
-          fadeVolume(0);
-        });
+    const startMusic = (onBlocked?: () => void) => {
+      setMusicState(true);
+      fadeVolume(0.42);
+      void musicLoop.play().then(hideMusicNotice).catch(() => {
+        setMusicState(false);
+        fadeVolume(0);
+        onBlocked?.();
+      });
+    };
+
+    const stopMusic = () => {
+      setMusicState(false);
+      fadeVolume(0, () => musicLoop.pause());
+    };
+
+    // Auto-start: the bottom-left notice tells the visitor that interacting
+    // with the page starts the music. The first qualifying gesture turns it
+    // on; afterwards the bottom-right button keeps full ON/OFF control.
+    const autoStartEvents = ['pointerdown', 'keydown', 'touchend', 'wheel'] as const;
+    let autoStarted = false;
+    const removeAutoStart = () => {
+      for (const type of autoStartEvents) window.removeEventListener(type, tryAutoStart);
+    };
+    const tryAutoStart = (event: Event) => {
+      if (autoStarted) return;
+      // Ignore gestures on the toggle itself — the click handler owns those.
+      if (event.target instanceof Node && musicToggle.contains(event.target)) return;
+      autoStarted = true;
+      removeAutoStart();
+      startMusic(() => {
+        // The gesture (e.g. wheel) didn't grant audio playback — keep
+        // waiting for the next interaction instead of giving up.
+        autoStarted = false;
+        for (const type of autoStartEvents) {
+          window.addEventListener(type, tryAutoStart, { passive: true });
+        }
+      });
+    };
+    for (const type of autoStartEvents) {
+      window.addEventListener(type, tryAutoStart, { passive: true });
+    }
+
+    musicToggle.addEventListener('click', () => {
+      autoStarted = true;
+      removeAutoStart();
+      hideMusicNotice();
+
+      if (musicLoop.paused) {
+        startMusic();
         return;
       }
 
-      setMusicState(false);
-      fadeVolume(0, () => musicLoop.pause());
+      stopMusic();
     });
   }
 
