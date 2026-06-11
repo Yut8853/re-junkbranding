@@ -25,6 +25,7 @@ const EXHIBIT_VIDEO_SRC: Record<ExhibitTheme, string> = {
 };
 
 const FULL_HD_ASPECT = 16 / 9;
+const EXHIBIT_SCALE = 3.18;
 
 const COMPOSITE_VERT = /* glsl */ `
 varying vec2 vUv;
@@ -262,7 +263,7 @@ function cloneDefaultWaterColors(): WaterColorParams {
 }
 
 function fullHdFrameSize(area: number): [number, number] {
-  const width = Math.sqrt(area * FULL_HD_ASPECT);
+  const width = Math.sqrt(area * EXHIBIT_SCALE * FULL_HD_ASPECT);
   return [width, width / FULL_HD_ASPECT];
 }
 
@@ -578,14 +579,17 @@ export class Showroom {
   }
 
   private buildExhibits(): void {
-    // Three works placed with the same intent along the existing path.
-    this.exhibit('toPlace', [6.6, 2.4, -7], -1, fullHdFrameSize(3.0 * 3.7));
-    this.exhibit('luzReal', [-6.8, 3.0, -14], 1, fullHdFrameSize(3.4 * 4.6));
-    this.exhibit('transB', [6.9, 2.7, -21], -1, fullHdFrameSize(3.1 * 4.0));
+    // Six works placed with a slightly irregular left/right gallery rhythm.
+    this.exhibit('toPlace', [7.35, 3.45, -2.8], -1, fullHdFrameSize(3.0 * 3.7));
+    this.exhibit('transB', [-7.25, 1.8, -5.7], 1, fullHdFrameSize(2.35 * 3.05));
+    this.exhibit('luzReal', [-7.45, 3.85, -9.2], 1, fullHdFrameSize(3.35 * 4.45));
+    this.exhibit('toPlace', [7.55, 2.05, -12.1], -1, fullHdFrameSize(2.45 * 3.1));
+    this.exhibit('transB', [7.2, 3.25, -15.7], -1, fullHdFrameSize(3.15 * 4.05));
+    this.exhibit('luzReal', [-7.05, 2.72, -19.6], 1, fullHdFrameSize(2.55 * 3.25));
   }
 
   private buildMotes(): void {
-    const count = 86;
+    const count = 130;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const palette = [
@@ -625,12 +629,12 @@ export class Showroom {
     const glow = this.track(makeGlowTexture());
     const mat = this.track(
       new THREE.PointsMaterial({
-        size: 0.18,
+        size: 0.32,
         map: glow,
         color: 0xffffff,
         vertexColors: true,
         transparent: true,
-        opacity: 0.72,
+        opacity: 0.94,
         depthWrite: false,
         depthTest: false,
         blending: THREE.AdditiveBlending,
@@ -822,8 +826,8 @@ export class Showroom {
     }
     attr.needsUpdate = true;
     const moteMat = this.motes.material as THREE.PointsMaterial;
-    moteMat.opacity = 0.5 + this.sparklePulse * 0.44 + gravityStretch * 0.18;
-    moteMat.size = 0.16 + this.sparklePulse * 0.09 + gravityStretch * 0.04;
+    moteMat.opacity = Math.min(1, 0.78 + this.sparklePulse * 0.32 + gravityStretch * 0.22);
+    moteMat.size = 0.3 + this.sparklePulse * 0.16 + gravityStretch * 0.1;
 
     const compositeStrength = this.reduced ? 0 : gravityStretch;
     if (compositeStrength > 0.01) {

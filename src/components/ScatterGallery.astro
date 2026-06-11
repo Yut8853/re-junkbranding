@@ -1,0 +1,102 @@
+---
+const panels = Array.from({ length: 10 }, (_, index) => {
+  const n = String(index + 1).padStart(2, '0');
+  return {
+    src: `/inorganic/panel-${n}.png`,
+    alt: '',
+  };
+});
+
+const placements = [
+  ['-32vw', '-26vh', '-10deg', '1.08'],
+  ['18vw', '-30vh', '7deg', '0.96'],
+  ['-8vw', '-18vh', '2deg', '1.12'],
+  ['34vw', '-9vh', '12deg', '0.92'],
+  ['-38vw', '2vh', '-6deg', '0.98'],
+  ['10vw', '4vh', '-13deg', '1.06'],
+  ['-24vw', '22vh', '9deg', '0.88'],
+  ['30vw', '20vh', '-4deg', '1'],
+  ['-4vw', '30vh', '15deg', '0.9'],
+  ['42vw', '34vh', '5deg', '0.82'],
+];
+---
+
+<section class="section scatter" data-transition-to="scatter" data-scatter-gallery>
+  <div class="scatter__inner">
+    <div class="scatter__stage" aria-hidden="true">
+      {panels.map((panel, index) => (
+        <canvas
+          class="scatter__panel"
+          width="1024"
+          height="576"
+          aria-label={panel.alt}
+          data-src={panel.src}
+          data-scatter-panel
+          data-glitch-panel
+          data-x={placements[index][0]}
+          data-y={placements[index][1]}
+          data-rotate={placements[index][2]}
+          data-scale={placements[index][3]}
+        ></canvas>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style lang="scss">
+  .scatter {
+    position: relative;
+    min-height: 150svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .scatter__inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 100svh;
+  }
+
+  .scatter__stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .scatter__panel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: clamp(12rem, 26vw, 34rem);
+    aspect-ratio: 16 / 9;
+    border: 1px solid rgba(225, 238, 255, 0.16);
+    border-radius: 2px;
+    background: rgba(5, 8, 12, 0.76);
+    box-shadow:
+      0 1.4rem 3.2rem rgba(0, 0, 0, 0.34),
+      0 0 2.4rem rgba(188, 239, 255, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transform: translate3d(-50%, -50%, 0);
+    will-change: transform, opacity, filter;
+  }
+
+  @media (max-width: 720px) {
+    .scatter__panel {
+      width: clamp(9rem, 42vw, 16rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scatter {
+      min-height: 100svh;
+    }
+
+    .scatter__stage {
+      position: relative;
+    }
+  }
+</style>

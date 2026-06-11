@@ -4,6 +4,7 @@ import ShowroomCanvas from '../scenes/showroom/ShowroomCanvas';
 import Hero from '../components/Hero.astro';
 import Meaning from '../components/Meaning.astro';
 import Issue from '../components/Issue.astro';
+import ScatterGallery from '../components/ScatterGallery.astro';
 ---
 
 <Base>
@@ -20,6 +21,7 @@ import Issue from '../components/Issue.astro';
     <Hero />
     <Meaning />
     <Issue />
+    <ScatterGallery />
   </main>
 
   <button
@@ -365,6 +367,14 @@ import Issue from '../components/Issue.astro';
     );
   }
 
+  .meaning[data-transition-from],
+  .meaning[data-transition-to],
+  .issue[data-transition-from],
+  .issue[data-transition-to] {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     [data-transition-from],
     [data-transition-to] {
@@ -401,12 +411,220 @@ import Issue from '../components/Issue.astro';
   const page = document.querySelector<HTMLElement>('.page');
   const musicToggle = document.querySelector<HTMLButtonElement>('[data-music-toggle]');
   const musicLoop = document.querySelector<HTMLAudioElement>('[data-music-loop]');
+  const scatterGalleries = document.querySelectorAll<HTMLElement>('[data-scatter-gallery]');
 
   const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
   const smoothstep = (edge0: number, edge1: number, value: number) => {
     const t = clamp01((value - edge0) / (edge1 - edge0));
     return t * t * (3 - 2 * t);
   };
+
+  const scatterPanelsOf = (gallery: HTMLElement) =>
+    Array.from(gallery.querySelectorAll<HTMLElement>('[data-scatter-panel]'));
+
+  const initGlitchPanel = (canvas: HTMLCanvasElement, allowHover: boolean) => {
+    const gl = canvas.getContext('webgl', {
+      antialias: false,
+      alpha: false,
+      premultipliedAlpha: false,
+    });
+    const src = canvas.dataset.src;
+    if (!gl || !src) return;
+
+    const vertex = `
+      attribute vec2 aPosition;
+      varying vec2 vUv;
+
+      void main() {
+        vUv = aPosition * 0.5 + 0.5;
+        gl_Position = vec4(aPosition, 0.0, 1.0);
+      }
+    `;
+    const fragment = `
+      precision highp float;
+
+      uniform sampler2D uImage;
+      uniform vec2 uImageSize;
+      uniform vec2 uCanvasSize;
+      uniform float uHover;
+      uniform float uTime;
+
+      varying vec2 vUv;
+
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+      }
+
+      vec2 coverUv(vec2 uv) {
+        float canvasAspect = uCanvasSize.x / max(uCanvasSize.y, 0.0001);
+        float imageAspect = uImageSize.x / max(uImageSize.y, 0.0001);
+        vec2 scale = vec2(1.0);
+
+        if (imageAspect > canvasAspect) {
+          scale.x = canvasAspect / imageAspect;
+        } else {
+          scale.y = imageAspect / canvasAspect;
+        }
+
+        return clamp((uv - 0.5) * scale + 0.5, vec2(0.001), vec2(0.999));
+      }
+
+      void main() {
+        vec2 uv = coverUv(vUv);
+        float row = floor(vUv.y * 38.0);
+        float timeStep = floor(uTime * 18.0);
+        float stripeNoise = hash(vec2(row, timeStep));
+        float stripe = step(0.58 - uHover * 0.46, stripeNoise);
+        float thinBand = 1.0 - smoothstep(0.0, 0.04, abs(fract(vUv.y * 38.0) - 0.5));
+        float slice = (hash(vec2(row * 4.7, timeStep + 9.0)) - 0.5) * stripe * thinBand * uHover * 0.6;
+        float jitter = (hash(vec2(floor(vUv.y * 118.0), timeStep * 2.0)) - 0.5) * uHover * 0.06;
+        vec2 shifted = uv + vec2(slice + jitter, 0.0);
+
+        float chroma = uHover * (0.035 + stripe * 0.09);
+        float verticalChroma = uHover * stripe * thinBand * 0.03;
+        vec2 redUv = clamp(shifted + vec2(chroma, verticalChroma), vec2(0.001), vec2(0.999));
+        vec2 greenUv = clamp(shifted, vec2(0.001), vec2(0.999));
+        vec2 blueUv = clamp(shifted - vec2(chroma, verticalChroma), vec2(0.001), vec2(0.999));
+
+        vec3 color;
+        color.r = texture2D(uImage, redUv).r;
+        color.g = texture2D(uImage, greenUv).g;
+        color.b = texture2D(uImage, blueUv).b;
+
+        float grain = hash(vUv * uCanvasSize + uTime * 61.0) - 0.5;
+        float scan = sin(vUv.y * uCanvasSize.y * 1.35) * 0.5 + 0.5;
+        color += grain * uHover * 0.6;
+        color += vec3(0.1, 0.36, 1.0) * stripe * thinBand * uHover * 0.8;
+        color += vec3(1.0, 0.12, 0.42) * stripe * uHover * 0.22;
+        color *= 1.0 + uHover * 0.6;
+        color *= mix(1.0, 0.74 + scan * 0.9, uHover * 0.72);
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+    const compile = (type: number, source: string) => {
+      const shader = gl.createShader(type);
+      if (!shader) return null;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.warn(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    };
+
+    const vertexShader = compile(gl.VERTEX_SHADER, vertex);
+    const fragmentShader = compile(gl.FRAGMENT_SHADER, fragment);
+    if (!vertexShader || !fragmentShader) return;
+
+    const program = gl.createProgram();
+    if (!program) return;
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn(gl.getProgramInfoLog(program));
+      return;
+    }
+    gl.useProgram(program);
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+      gl.STATIC_DRAW,
+    );
+
+    const position = gl.getAttribLocation(program, 'aPosition');
+    gl.enableVertexAttribArray(position);
+    gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+    const uniforms = {
+      image: gl.getUniformLocation(program, 'uImage'),
+      imageSize: gl.getUniformLocation(program, 'uImageSize'),
+      canvasSize: gl.getUniformLocation(program, 'uCanvasSize'),
+      hover: gl.getUniformLocation(program, 'uHover'),
+      time: gl.getUniformLocation(program, 'uTime'),
+    };
+    const texture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.uniform1i(uniforms.image, 0);
+    gl.uniform2f(uniforms.canvasSize, canvas.width, canvas.height);
+
+    let targetHover = 0;
+    let hover = 0;
+    let raf = 0;
+    let imageReady = false;
+    const image = new Image();
+
+    const render = (time: number) => {
+      hover += (targetHover - hover) * 0.14;
+      if (!imageReady) {
+        raf = requestAnimationFrame(render);
+        return;
+      }
+
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform1f(uniforms.hover, hover);
+      gl.uniform1f(uniforms.time, time * 0.001);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+      if (Math.abs(targetHover - hover) > 0.001 || targetHover > 0) {
+        raf = requestAnimationFrame(render);
+      } else {
+        raf = 0;
+      }
+    };
+
+    const requestRender = () => {
+      if (!raf) raf = requestAnimationFrame(render);
+    };
+
+    image.onload = () => {
+      imageReady = true;
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.uniform2f(uniforms.imageSize, image.naturalWidth, image.naturalHeight);
+      requestRender();
+    };
+    image.src = src;
+
+    if (allowHover) {
+      canvas.addEventListener('pointerenter', () => {
+        targetHover = 1;
+        requestRender();
+      });
+      canvas.addEventListener('pointerleave', () => {
+        targetHover = 0;
+        requestRender();
+      });
+    }
+  };
+
+  const settleScatterGallery = (gallery: HTMLElement) => {
+    scatterPanelsOf(gallery).forEach((panel) => {
+      panel.style.opacity = '1';
+      panel.style.transform = `
+        translate3d(calc(-50% + ${panel.dataset.x}), calc(-50% + ${panel.dataset.y}), 0)
+        rotate(${panel.dataset.rotate})
+        scale(${panel.dataset.scale})
+      `;
+      panel.style.filter = 'none';
+    });
+  };
+
+  document
+    .querySelectorAll<HTMLCanvasElement>('[data-glitch-panel]')
+    .forEach((canvas) => initGlitchPanel(canvas, !reduced));
 
   if (musicToggle && musicLoop) {
     let fadeFrame = 0;
@@ -463,6 +681,7 @@ import Issue from '../components/Issue.astro';
       el.style.opacity = '1';
       el.style.transform = 'none';
     });
+    scatterGalleries.forEach(settleScatterGallery);
   } else {
     gsap.registerPlugin(ScrollTrigger);
     els.forEach((el) => {
@@ -485,6 +704,52 @@ import Issue from '../components/Issue.astro';
           },
         },
       );
+    });
+
+    scatterGalleries.forEach((gallery) => {
+      const panels = scatterPanelsOf(gallery);
+      if (!panels.length) return;
+
+      gsap.set(panels, {
+        xPercent: -50,
+        yPercent: -50,
+        x: 0,
+        y: 0,
+        rotation: 0,
+        scale: (index) => (index === 0 ? 0.72 : 0.58),
+        autoAlpha: (index) => (index === 0 ? 0 : 0),
+        filter: 'blur(10px)',
+      });
+
+      const scatterTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: gallery,
+          start: 'top 68%',
+          end: 'bottom 34%',
+          scrub: true,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      scatterTimeline
+        .to(panels[0], {
+          autoAlpha: 1,
+          scale: 0.96,
+          filter: 'blur(0px)',
+          duration: 0.22,
+          ease: 'power2.out',
+        })
+        .to(panels, {
+          x: (_index, target) => (target as HTMLElement).dataset.x ?? '0vw',
+          y: (_index, target) => (target as HTMLElement).dataset.y ?? '0vh',
+          rotation: (_index, target) => (target as HTMLElement).dataset.rotate ?? '0deg',
+          scale: (_index, target) => Number((target as HTMLElement).dataset.scale ?? 1),
+          autoAlpha: 1,
+          filter: 'blur(0px)',
+          duration: 0.78,
+          stagger: { amount: 0.18, from: 'center' },
+          ease: 'none',
+        }, 0.22);
     });
 
     if (page) {

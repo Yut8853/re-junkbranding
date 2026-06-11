@@ -2,13 +2,11 @@
 ---
 
 <section class="section issue" data-transition-to="issue">
-  <div class="issue__scrim" aria-hidden="true"></div>
-
   <div class="issue__inner">
     <p class="issue__label" data-reveal>Issue</p>
 
     <h2 class="issue__lead" data-reveal data-reveal-delay="0.05">
-      いいお店なのに、それが画面では伝わらない。
+      いいものなのに、それが画面では伝わらない。
     </h2>
 
     <p class="issue__body" data-reveal data-reveal-delay="0.12">
@@ -26,22 +24,6 @@
     justify-content: center;
     text-align: center;
     overflow: hidden;
-  }
-
-  // The space sinks further here — a deeper, wider pool so the problem reads
-  // strongly. Still radial (no hard edges) so the showroom remains uncut.
-  .issue__scrim {
-    position: absolute;
-    inset: -10% 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      72% 56% at 50% 50%,
-      rgba(4, 5, 8, 0.9) 0%,
-      rgba(4, 5, 8, 0.74) 42%,
-      rgba(4, 5, 8, 0.4) 72%,
-      rgba(4, 5, 8, 0) 100%
-    );
   }
 
   .issue__inner {
