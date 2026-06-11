@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import ShowroomCanvas from '../scenes/showroom/ShowroomCanvas';
 import Hero from '../components/Hero.astro';
 import Meaning from '../components/Meaning.astro';
+import Issue from '../components/Issue.astro';
 ---
 
 <Base>
@@ -11,29 +12,62 @@ import Meaning from '../components/Meaning.astro';
     <ShowroomCanvas client:load />
   </div>
 
-  <svg class="gravity-filter-defs" aria-hidden="true" focusable="false">
-    <filter id="gravity-section-displace">
-      <feTurbulence
-        type="fractalNoise"
-        baseFrequency="0.012 0.085"
-        numOctaves="2"
-        seed="8"
-        result="gravityNoise"
-      />
-      <feDisplacementMap
-        in="SourceGraphic"
-        in2="gravityNoise"
-        scale="0"
-        xChannelSelector="R"
-        yChannelSelector="B"
-      />
-    </filter>
-  </svg>
+  <a class="site-logo" href="/" aria-label="JUNK BRANDING トップへ">
+    <span class="site-logo__main">JUNK BRANDING</span>
+  </a>
 
   <main class="page">
     <Hero />
     <Meaning />
+    <Issue />
   </main>
+
+  <button
+    class="music-toggle"
+    type="button"
+    aria-label="音楽を再生"
+    aria-pressed="false"
+    title="Music"
+    data-music-toggle
+  >
+    <span class="music-toggle__halo" aria-hidden="true"></span>
+    <svg class="music-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        class="music-toggle__speaker"
+        d="M4.75 9.25h3.7l4.8-3.75v13l-4.8-3.75h-3.7z"
+        fill="none"
+        stroke="currentColor"
+        stroke-linejoin="round"
+        stroke-width="1.7"
+      />
+      <path
+        class="music-toggle__wave music-toggle__wave--inner"
+        d="M16 9.1c.82.78 1.23 1.74 1.23 2.9s-.41 2.12-1.23 2.9"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-width="1.7"
+      />
+      <path
+        class="music-toggle__wave music-toggle__wave--outer"
+        d="M18.45 6.9c1.36 1.37 2.04 3.06 2.04 5.1s-.68 3.73-2.04 5.1"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-width="1.7"
+      />
+      <path
+        class="music-toggle__slash"
+        d="M5.2 4.8 19 19.2"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-width="1.8"
+      />
+    </svg>
+  </button>
+
+  <audio data-music-loop src="/noctiluca_night_sea_loop.wav" preload="none" loop></audio>
 </Base>
 
 <style is:global>
@@ -42,6 +76,14 @@ import Meaning from '../components/Meaning.astro';
     inset: 0;
     z-index: 0;
     pointer-events: none;
+    background:
+      radial-gradient(
+        circle at 50% 46%,
+        rgba(226, 128, 58, 0.38) 0%,
+        rgba(132, 70, 42, 0.24) 28%,
+        rgba(34, 23, 22, 0.82) 62%,
+        #07070b 100%
+      );
   }
 
   .showroom-bg .showroom-canvas {
@@ -50,20 +92,199 @@ import Meaning from '../components/Meaning.astro';
     height: 100%;
   }
 
-  .gravity-filter-defs {
-    position: absolute;
-    width: 0;
-    height: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-
   .page {
     position: relative;
     z-index: 1;
     perspective: 900px;
     isolation: isolate;
-    --blend-overlap: clamp(8rem, 34vh, 22rem);
+    --blend-overlap: clamp(24rem, 100vh, 68rem);
+    /* Extra breathing room between sections so the gravity transition
+       has a long, visible scroll window of its own. */
+    --section-gap: clamp(28rem, 130vh, 72rem);
+    --gravity-progress: 0;
+    --gravity-blend: 0;
+    --gravity-pull-y: 0px;
+    --gravity-stretch-y: 1;
+    --gravity-band-height: 80px;
+    --gravity-tension: 0;
+    --gravity-elastic-return: 0;
+    --gravity-boundary-scale-y: 1;
+    --gravity-overlay: 0;
+    --hero-boundary-shift: 0px;
+    --meaning-boundary-shift: 0px;
+    --meaning-rise: 3.5rem;
+  }
+
+  .site-logo {
+    position: fixed;
+    top: max(1.1rem, env(safe-area-inset-top));
+    left: max(1.4rem, env(safe-area-inset-left));
+    z-index: 20;
+    display: flex;
+    align-items: baseline;
+    gap: 0.55em;
+    font-family: var(--font-serif);
+    text-decoration: none;
+    color: var(--ink);
+    mix-blend-mode: difference;
+    transition: opacity 0.28s ease;
+  }
+
+  .site-logo:hover {
+    opacity: 0.72;
+  }
+
+  .site-logo:focus-visible {
+    outline: 2px solid rgba(255, 172, 88, 0.76);
+    outline-offset: 6px;
+  }
+
+  .site-logo__main {
+    font-size: 1.18rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    line-height: 1;
+  }
+
+  .site-logo__sub {
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.42em;
+    line-height: 1;
+    color: var(--warm);
+    opacity: 0.85;
+  }
+
+  .music-toggle {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    padding: 0;
+    border: 1px solid rgba(255, 216, 168, 0.18);
+    border-radius: 999px;
+    color: rgba(255, 225, 190, 0.78);
+    background:
+      radial-gradient(circle at 50% 35%, rgba(255, 156, 72, 0.18), transparent 62%),
+      rgba(7, 7, 11, 0.54);
+    box-shadow:
+      0 1rem 2.4rem rgba(0, 0, 0, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+    cursor: pointer;
+    isolation: isolate;
+    transition:
+      color 0.28s ease,
+      border-color 0.28s ease,
+      background 0.28s ease,
+      transform 0.28s ease,
+      box-shadow 0.28s ease;
+  }
+
+  .music-toggle:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 191, 118, 0.34);
+    color: #ffd7a2;
+  }
+
+  .music-toggle:focus-visible {
+    outline: 2px solid rgba(255, 172, 88, 0.76);
+    outline-offset: 4px;
+  }
+
+  .music-toggle.is-on {
+    color: #ffb45f;
+    border-color: rgba(255, 170, 84, 0.52);
+    background:
+      radial-gradient(circle at 50% 45%, rgba(255, 145, 46, 0.38), rgba(255, 145, 46, 0.08) 56%, transparent 72%),
+      rgba(18, 12, 10, 0.62);
+    box-shadow:
+      0 1rem 2.8rem rgba(0, 0, 0, 0.36),
+      0 0 2rem rgba(255, 132, 42, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .music-toggle__halo {
+    position: absolute;
+    inset: 0.42rem;
+    z-index: -1;
+    border-radius: inherit;
+    background: rgba(255, 140, 42, 0.18);
+    opacity: 0;
+    transform: scale(0.78);
+    transition:
+      opacity 0.28s ease,
+      transform 0.28s ease;
+  }
+
+  .music-toggle.is-on .music-toggle__halo {
+    opacity: 1;
+    transform: scale(1);
+    animation: musicPulse 2.4s ease-in-out infinite;
+  }
+
+  .music-toggle__icon {
+    width: 1.35rem;
+    height: 1.35rem;
+    filter: drop-shadow(0 0 0.65rem rgba(255, 147, 58, 0.24));
+  }
+
+  .music-toggle__slash {
+    opacity: 1;
+    transform-origin: center;
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+  }
+
+  .music-toggle__wave {
+    opacity: 0.22;
+    transform-origin: 12px 12px;
+    transition:
+      opacity 0.24s ease,
+      transform 0.24s ease;
+  }
+
+  .music-toggle.is-on .music-toggle__slash {
+    opacity: 0;
+    transform: scaleX(0.32) rotate(-8deg);
+  }
+
+  .music-toggle.is-on .music-toggle__wave {
+    opacity: 1;
+  }
+
+  .music-toggle.is-on .music-toggle__wave--outer {
+    animation: musicWave 1.8s ease-in-out infinite;
+  }
+
+  @keyframes musicPulse {
+    0%,
+    100% {
+      opacity: 0.58;
+      transform: scale(0.92);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+  }
+
+  @keyframes musicWave {
+    0%,
+    100% {
+      transform: scale(0.96);
+    }
+
+    50% {
+      transform: scale(1.08);
+    }
   }
 
   .page > section {
@@ -74,40 +295,100 @@ import Meaning from '../components/Meaning.astro';
   [data-transition-to] {
     position: relative;
     transform-origin: 50% 50%;
-    will-change: clip-path, transform, opacity, filter;
-    filter: url("#gravity-section-displace");
+    will-change: transform, opacity;
+  }
+
+  .meaning__inner,
+  .meaning__label,
+  .meaning__lead,
+  .meaning__body,
+  .issue__inner,
+  .issue__label,
+  .issue__lead,
+  .issue__body {
+    will-change: transform, opacity, filter, text-shadow;
   }
 
   [data-transition-from] {
     z-index: 2;
+    /* Keep the section's own content above the bottom fade zone of the mask,
+       otherwise it renders half-transparent (= looks dark). */
+    padding-bottom: var(--blend-overlap);
     margin-bottom: calc(var(--blend-overlap) * -1);
-    clip-path: inset(0 0 0% 0);
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 calc(100% - var(--blend-overlap) * 1.05),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 0%,
+      #000 calc(100% - var(--blend-overlap) * 1.05),
+      transparent 100%
+    );
   }
 
   [data-transition-to] {
     z-index: 3;
-    padding-top: var(--blend-overlap);
-    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
-    transform: translate3d(0, 3.5rem, 0);
-    opacity: 0.88;
+    padding-top: calc(var(--blend-overlap) + var(--section-gap));
+    transform: translate3d(0, var(--meaning-rise), 0);
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 calc(var(--blend-overlap) * 1.08),
+      #000 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 calc(var(--blend-overlap) * 1.08),
+      #000 100%
+    );
+  }
+
+  [data-transition-from][data-transition-to] {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 calc(var(--blend-overlap) * 0.82),
+      #000 calc(100% - var(--blend-overlap) * 0.82),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 calc(var(--blend-overlap) * 0.82),
+      #000 calc(100% - var(--blend-overlap) * 0.82),
+      transparent 100%
+    );
   }
 
   @media (prefers-reduced-motion: reduce) {
     [data-transition-from],
     [data-transition-to] {
-      clip-path: none;
       transform: none;
       opacity: 1;
       filter: none;
+      -webkit-mask-image: none;
+      mask-image: none;
     }
 
     [data-transition-from] {
       margin-bottom: 0;
+      padding-bottom: 0;
     }
 
     [data-transition-to] {
       padding-top: 0;
     }
+
+    .music-toggle.is-on .music-toggle__halo,
+    .music-toggle.is-on .music-toggle__wave--outer {
+      animation: none;
+    }
+
   }
 </style>
 
@@ -117,8 +398,65 @@ import Meaning from '../components/Meaning.astro';
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const els = document.querySelectorAll<HTMLElement>('[data-reveal]');
-  const hero = document.querySelector<HTMLElement>('[data-transition-from="hero"]');
-  const meaning = document.querySelector<HTMLElement>('[data-transition-to="meaning"]');
+  const page = document.querySelector<HTMLElement>('.page');
+  const musicToggle = document.querySelector<HTMLButtonElement>('[data-music-toggle]');
+  const musicLoop = document.querySelector<HTMLAudioElement>('[data-music-loop]');
+
+  const clamp01 = (value: number) => Math.min(Math.max(value, 0), 1);
+  const smoothstep = (edge0: number, edge1: number, value: number) => {
+    const t = clamp01((value - edge0) / (edge1 - edge0));
+    return t * t * (3 - 2 * t);
+  };
+
+  if (musicToggle && musicLoop) {
+    let fadeFrame = 0;
+    const fadeVolume = (target: number, onDone?: () => void) => {
+      cancelAnimationFrame(fadeFrame);
+
+      const start = musicLoop.volume;
+      const startedAt = performance.now();
+      const duration = 420;
+      const tick = (now: number) => {
+        const progress = clamp01((now - startedAt) / duration);
+        musicLoop.volume = start + (target - start) * smoothstep(0, 1, progress);
+
+        if (progress < 1) {
+          fadeFrame = requestAnimationFrame(tick);
+          return;
+        }
+
+        onDone?.();
+      };
+
+      fadeFrame = requestAnimationFrame(tick);
+    };
+
+    const setMusicState = (isOn: boolean) => {
+      musicToggle.classList.toggle('is-on', isOn);
+      musicToggle.setAttribute('aria-pressed', String(isOn));
+      musicToggle.setAttribute('aria-label', isOn ? '音楽を停止' : '音楽を再生');
+    };
+
+    musicLoop.volume = 0;
+    setMusicState(false);
+
+    musicToggle.addEventListener('click', () => {
+      const shouldPlay = musicLoop.paused;
+
+      if (shouldPlay) {
+        setMusicState(true);
+        fadeVolume(0.42);
+        void musicLoop.play().catch(() => {
+          setMusicState(false);
+          fadeVolume(0);
+        });
+        return;
+      }
+
+      setMusicState(false);
+      fadeVolume(0, () => musicLoop.pause());
+    });
+  }
 
   if (reduced) {
     els.forEach((el) => {
@@ -149,62 +487,129 @@ import Meaning from '../components/Meaning.astro';
       );
     });
 
-    if (hero && meaning) {
-      const heroScrim = hero.querySelector<HTMLElement>('.hero__scrim');
-      const heroContent = hero.querySelector<HTMLElement>('.hero__inner');
-      const meaningContent = meaning.querySelector<HTMLElement>('.meaning__inner');
-      const displacement = document.querySelector<SVGFEDisplacementMapElement>(
-        '#gravity-section-displace feDisplacementMap',
-      );
-      const heroOpen = 'polygon(0% 0%, 100% 0%, 100% 100%, 82% 100%, 68% 100%, 56% 100%, 50% 100%, 44% 100%, 32% 100%, 18% 100%, 0% 100%)';
-      const heroPulled = 'polygon(0% 0%, 100% 0%, 100% 86%, 82% 84%, 68% 93%, 56% 74%, 50% 100%, 44% 74%, 32% 93%, 18% 84%, 0% 86%)';
-      const heroRelease = 'polygon(0% 0%, 100% 0%, 100% 48%, 82% 50%, 68% 46%, 56% 56%, 50% 62%, 44% 56%, 32% 46%, 18% 50%, 0% 48%)';
-      const meaningHidden = 'polygon(0% 100%, 18% 100%, 32% 100%, 44% 100%, 50% 100%, 56% 100%, 68% 100%, 82% 100%, 100% 100%, 100% 100%, 0% 100%)';
-      const meaningPulled = 'polygon(0% 24%, 18% 20%, 32% 8%, 44% 30%, 50% 0%, 56% 30%, 68% 8%, 82% 20%, 100% 24%, 100% 100%, 0% 100%)';
-      const meaningOpen = 'polygon(0% 0%, 18% 0%, 32% 0%, 44% 0%, 50% 0%, 56% 0%, 68% 0%, 82% 0%, 100% 0%, 100% 100%, 0% 100%)';
+    if (page) {
+      // Generic boundary system: every adjacent pair of `.page > section`
+      // gets one gravity transition, anchored on the actual content positions
+      // (not section offsetTop, which is skewed by the overlap margins).
+      const sections = Array.from(page.querySelectorAll<HTMLElement>(':scope > section'));
+      const innerOf = (section: HTMLElement) =>
+        section.querySelector<HTMLElement>(':scope > [class*="__inner"]');
+      const scrimOf = (section: HTMLElement) =>
+        section.querySelector<HTMLElement>(':scope > [class*="__scrim"]');
 
-      const tl = gsap.timeline({
-        defaults: { ease: 'none' },
-        scrollTrigger: {
-          trigger: hero,
-          start: 'top top',
-          end: 'bottom top',
+      sections.forEach((fromSection, index) => {
+        const toSection = sections[index + 1];
+        if (!toSection) return;
+
+        const fromInner = innerOf(fromSection);
+        const toInner = innerOf(toSection);
+        if (!fromInner || !toInner) return;
+
+        const fromScrim = scrimOf(fromSection);
+        const fromText = Array.from(fromInner.children).filter(
+          (child): child is HTMLElement => child instanceof HTMLElement,
+        );
+        const toText = Array.from(toInner.children).filter(
+          (child): child is HTMLElement => child instanceof HTMLElement,
+        );
+
+        ScrollTrigger.create({
+          trigger: fromSection,
+          // Starts once the outgoing content is leaving the upper half of the
+          // viewport — never while it is still centred on screen.
+          start: () =>
+            fromSection.offsetTop + fromInner.offsetTop + fromInner.offsetHeight - window.innerHeight * 0.55,
+          endTrigger: toSection,
+          // Ends right before the incoming content enters the viewport,
+          // so the effect is fully over by the time the next section appears.
+          end: () => toSection.offsetTop + toInner.offsetTop - window.innerHeight,
           scrub: true,
-        },
-      });
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            const viewport = window.innerHeight;
+            const blendAmount = Math.sin(progress * Math.PI);
+            const handoff = smoothstep(0.24, 0.78, progress);
+            const returnPhase = smoothstep(0.58, 1, progress);
+            const elasticReturn = returnPhase * Math.sin(returnPhase * Math.PI) * viewport * 0.024;
+            const pullY = blendAmount * viewport * 0.4 - elasticReturn;
+            const stretchY = 1 + blendAmount * 3;
+            const bandHeight = viewport * (0.32 + blendAmount * 0.72);
+            const tension = Math.pow(blendAmount, 1.6);
+            const boundaryScaleY = stretchY + tension * 0.46;
+            const glitchKick = tension * Math.sin(progress * Math.PI * 9);
+            const chromaShadow = [
+              `${(-7 * tension).toFixed(2)}px ${(2 * tension).toFixed(2)}px 0 rgba(255, 72, 42, ${Math.min(0.34, tension * 0.34).toFixed(3)})`,
+              `${(8 * tension).toFixed(2)}px ${(-2 * tension).toFixed(2)}px 0 rgba(64, 104, 255, ${Math.min(0.24, tension * 0.24).toFixed(3)})`,
+              `0 ${(18 * tension).toFixed(2)}px ${(34 * tension).toFixed(2)}px rgba(255, 132, 42, ${Math.min(0.32, tension * 0.32).toFixed(3)})`,
+              '0 1px 40px rgba(6, 7, 11, 0.6)',
+            ].join(', ');
 
-      tl.fromTo(
-        hero,
-        { clipPath: heroOpen, y: 0, scaleY: 1 },
-        { clipPath: heroPulled, y: -8, scaleY: 1.035, duration: 0.5 },
-        0,
-      )
-        .to(hero, { clipPath: heroRelease, y: -34, scaleY: 0.985, duration: 0.5 }, 0.5)
-        .to(displacement, { attr: { scale: 42 }, duration: 0.5 }, 0)
-        .to(displacement, { attr: { scale: 0 }, duration: 0.5 }, 0.5)
-        .fromTo(
-          meaning,
-          { clipPath: meaningHidden, y: 56, scaleY: 0.96, autoAlpha: 0.88 },
-          { clipPath: meaningPulled, y: 10, scaleY: 1.045, autoAlpha: 1, duration: 0.5 },
-          0,
-        )
-        .to(meaning, { clipPath: meaningOpen, y: 0, scaleY: 1, duration: 0.5 }, 0.5)
-        .to(heroScrim, { scaleY: 1.26, transformOrigin: '50% 78%', autoAlpha: 0.86, duration: 0.5 }, 0.12)
-        .to(heroScrim, { scaleY: 0.82, autoAlpha: 0.34, duration: 0.42 }, 0.58)
-        .fromTo(
-          heroContent,
-          { y: 0, scaleY: 1, skewY: 0, autoAlpha: 1 },
-          { y: -34, scaleY: 1.08, skewY: -1.2, autoAlpha: 0.72, duration: 0.5 },
-          0,
-        )
-        .to(heroContent, { y: -64, scaleY: 0.96, skewY: 0, autoAlpha: 0.22, duration: 0.5 }, 0.5)
-        .fromTo(
-          meaningContent,
-          { y: 42, scaleY: 0.92, skewY: 1.1, autoAlpha: 0.58 },
-          { y: -8, scaleY: 1.08, skewY: -0.7, autoAlpha: 1, duration: 0.5 },
-          0.28,
-        )
-        .to(meaningContent, { y: 0, scaleY: 1, skewY: 0, duration: 0.36 }, 0.64);
+            page.style.setProperty('--gravity-progress', progress.toFixed(4));
+            page.style.setProperty('--gravity-blend', blendAmount.toFixed(4));
+            page.style.setProperty('--gravity-pull-y', `${pullY.toFixed(2)}px`);
+            page.style.setProperty('--gravity-stretch-y', stretchY.toFixed(4));
+            page.style.setProperty('--gravity-band-height', `${bandHeight.toFixed(2)}px`);
+            page.style.setProperty('--gravity-tension', tension.toFixed(4));
+            page.style.setProperty('--gravity-elastic-return', elasticReturn.toFixed(4));
+            page.style.setProperty('--gravity-boundary-scale-y', boundaryScaleY.toFixed(4));
+            page.style.setProperty('--gravity-overlay', Math.min(0.92, 0.18 + tension * 0.72).toFixed(4));
+            page.style.setProperty('--hero-boundary-shift', `${pullY.toFixed(2)}px`);
+            page.style.setProperty('--meaning-boundary-shift', `${(-pullY).toFixed(2)}px`);
+            page.style.setProperty('--meaning-rise', `${((1 - handoff) * 3.5).toFixed(3)}rem`);
+
+            gsap.set(fromSection, {
+              y: -progress * 26 + pullY * 0.08,
+              scaleY: 1 + tension * 0.06,
+              transformOrigin: '50% 72%',
+            });
+            gsap.set(toSection, {
+              y: -pullY * 0.16,
+              autoAlpha: 0.9 + handoff * 0.1,
+              scaleY: 1 + tension * 0.06,
+              transformOrigin: '50% 22%',
+            });
+            if (fromScrim) {
+              gsap.set(fromScrim, {
+                y: pullY * 0.5,
+                scaleY: 1 + blendAmount * 0.8,
+                autoAlpha: 0.86 - progress * 0.3,
+                transformOrigin: 'bottom center',
+              });
+            }
+            gsap.set(fromInner, {
+              y: -progress * 30 + pullY * 0.3,
+              scaleY: 1 + tension * 0.34,
+              scaleX: 1 - tension * 0.035,
+              skewY: -blendAmount * 0.28 + glitchKick * 0.16,
+              autoAlpha: 1 - progress * 0.3,
+              filter: `blur(${(tension * 0.62).toFixed(2)}px) saturate(${(1 + tension * 0.42).toFixed(3)})`,
+              transformOrigin: '50% 64%',
+            });
+            gsap.set(toInner, {
+              y: (1 - handoff) * 42 - pullY * 0.16,
+              scaleY: 1 + tension * 0.16,
+              scaleX: 1 - tension * 0.02,
+              skewY: blendAmount * 0.2 * (progress < 0.5 ? 1 : -1),
+              autoAlpha: 0.86 + handoff * 0.14,
+              filter: `blur(${(tension * 0.26).toFixed(2)}px) saturate(${(1 + tension * 0.22).toFixed(3)})`,
+              transformOrigin: '50% 30%',
+            });
+            gsap.set(fromText, {
+              y: pullY * 0.08,
+              scaleY: 1 + tension * 0.12,
+              x: glitchKick * 3,
+              textShadow: chromaShadow,
+            });
+            gsap.set(toText, {
+              y: -pullY * 0.06,
+              scaleY: 1 + tension * 0.08,
+              x: glitchKick * -2.4,
+              textShadow: chromaShadow,
+            });
+          },
+        });
+      });
     }
   }
 </script>

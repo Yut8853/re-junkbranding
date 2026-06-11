@@ -12,9 +12,9 @@ void main() {
   float axis = 1.0 - smoothstep(0.03, 0.42, abs(p.x));
   float verticalPull = axis * uStretchY;
 
-  pos.y *= 1.0 + verticalPull * 0.08;
-  pos.x += p.y * verticalPull * 0.045 * uDirection;
-  pos.z += axis * uDistortion * 0.035;
+  pos.y *= 1.0 + verticalPull * 0.24;
+  pos.x += p.y * verticalPull * 0.078 * uDirection;
+  pos.z += axis * uDistortion * 0.064;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }

@@ -1,9 +1,7 @@
 ---
 ---
 
-<section class="section meaning" data-transition-to="meaning">
-  <div class="meaning__scrim" aria-hidden="true"></div>
-
+<section class="section meaning" data-transition-to="meaning" data-transition-from="meaning">
   <div class="meaning__inner">
     <p class="meaning__label" data-reveal>Meaning</p>
 
@@ -12,8 +10,7 @@
     </h2>
 
     <p class="meaning__body" data-reveal data-reveal-delay="0.12">
-      見る人の操作に反応しながら、<br />
-      魅力の伝わり方そのものを変える設計です。
+      見る人の操作に反応しながら、魅力の伝わり方そのものを変える設計です。
     </p>
   </div>
 </section>
@@ -29,27 +26,10 @@
     overflow: hidden;
   }
 
-  // The words float in the showroom. A soft radial pool darkens only the centre
-  // so the words stay readable, while the space stays visible and uncut at the
-  // section edges (no horizontal banding into Hero or Issue).
-  .meaning__scrim {
-    position: absolute;
-    inset: -10% 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      62% 48% at 50% 50%,
-      rgba(5, 6, 10, 0.82) 0%,
-      rgba(5, 6, 10, 0.6) 38%,
-      rgba(5, 6, 10, 0.28) 68%,
-      rgba(5, 6, 10, 0) 100%
-    );
-  }
-
   .meaning__inner {
     position: relative;
     z-index: 1;
-    max-width: 46ch;
+    max-width: none;
     padding-inline: var(--gutter);
   }
 
@@ -65,16 +45,25 @@
   .meaning__lead {
     font-family: var(--font-serif);
     font-weight: 600;
-    font-size: clamp(1.7rem, 4.2vw, 2.8rem);
+    font-size: clamp(1.4rem, 3.4vw, 2.6rem);
     line-height: 1.6;
     letter-spacing: 0.02em;
     color: #fff;
+    white-space: nowrap;
   }
 
   .meaning__body {
     margin-top: 1.8rem;
-    font-size: clamp(1rem, 1.7vw, 1.2rem);
+    font-size: clamp(0.92rem, 1.5vw, 1.2rem);
     line-height: 2.1;
     color: var(--ink-dim);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .meaning__lead,
+    .meaning__body {
+      white-space: normal;
+    }
   }
 </style>

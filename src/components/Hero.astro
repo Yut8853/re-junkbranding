@@ -28,9 +28,12 @@
 <style lang="scss">
   .hero {
     position: relative;
-    min-height: 100svh;
+    min-height: calc(100svh + var(--blend-overlap));
     display: flex;
     align-items: center;
+    /* Keep the KV centred in the visible viewport (not the taller
+       overlap box) and lift it further up. */
+    padding-bottom: calc(var(--blend-overlap) + 14svh);
     overflow: hidden;
   }
 
@@ -49,8 +52,9 @@
       ),
       linear-gradient(
         to top,
-        rgba(5, 6, 10, 0.8) 0%,
-        rgba(5, 6, 10, 0) 38%
+        rgba(80, 42, 26, 0.34) 0%,
+        rgba(226, 128, 58, 0.12) 22%,
+        rgba(5, 6, 10, 0) 52%
       );
   }
 
@@ -61,6 +65,9 @@
     max-width: var(--maxw);
     margin-inline: auto;
     padding-inline: var(--gutter);
+    text-align: center;
+    transform-origin: 50% 66%;
+    will-change: transform, opacity, filter;
   }
 
   .hero__eyebrow {
@@ -70,6 +77,7 @@
     text-transform: uppercase;
     color: var(--warm);
     opacity: 0.85;
+    will-change: transform, opacity, filter;
   }
 
   .hero__title {
@@ -80,25 +88,30 @@
     letter-spacing: 0.02em;
     color: #fff;
     text-shadow: 0 1px 40px rgba(6, 7, 11, 0.6);
+    will-change: transform, opacity, filter, text-shadow;
   }
 
   .hero__lead {
     margin-top: 2rem;
+    margin-inline: auto;
     font-size: clamp(1rem, 1.9vw, 1.3rem);
     line-height: 2;
     color: var(--ink-dim);
     max-width: 34ch;
+    will-change: transform, opacity, filter, text-shadow;
   }
 
   .hero__scroll {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.85rem;
     margin-top: clamp(3rem, 8vh, 5rem);
     font-size: 0.72rem;
     letter-spacing: 0.32em;
     text-transform: uppercase;
     color: var(--ink-faint);
+    will-change: transform, opacity, filter;
   }
 
   .hero__scroll-line {

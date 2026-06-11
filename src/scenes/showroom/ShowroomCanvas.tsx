@@ -41,16 +41,27 @@ export default function ShowroomCanvas() {
     });
     triggers.push(trigger);
 
-    const transitionPairs = document.querySelectorAll<HTMLElement>('[data-transition-from]');
-    transitionPairs.forEach((fromSection) => {
-      const toSection = fromSection.nextElementSibling as HTMLElement | null;
-      if (!toSection?.matches('[data-transition-to]')) return;
+    // Same generic boundary windows as the page script: one transition per
+    // adjacent pair of `.page > section`, anchored on content positions.
+    const pageEl = document.querySelector<HTMLElement>('.page');
+    const sections = pageEl
+      ? Array.from(pageEl.querySelectorAll<HTMLElement>(':scope > section'))
+      : [];
+    sections.forEach((fromSection, index) => {
+      const toSection = sections[index + 1];
+      if (!toSection) return;
+      const fromInner = fromSection.querySelector<HTMLElement>(':scope > [class*="__inner"]');
+      const toInner = toSection.querySelector<HTMLElement>(':scope > [class*="__inner"]');
+      if (!fromInner || !toInner) return;
 
       triggers.push(ScrollTrigger.create({
         trigger: fromSection,
-        start: 'top top',
-        end: 'bottom top',
+        start: () =>
+          fromSection.offsetTop + fromInner.offsetTop + fromInner.offsetHeight - window.innerHeight * 0.55,
+        endTrigger: toSection,
+        end: () => toSection.offsetTop + toInner.offsetTop - window.innerHeight,
         scrub: true,
+        invalidateOnRefresh: true,
         onUpdate: (self) => {
           scene.setGravity({
             strength: transitionStrength(self.progress),

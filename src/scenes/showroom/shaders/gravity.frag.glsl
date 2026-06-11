@@ -32,8 +32,8 @@ void main() {
   float absY = abs(p.y);
 
   float peak = pow(sin(clamp(uProgress, 0.0, 1.0) * 3.14159265), 0.72);
-  float reach = mix(0.085, 0.94, uStretchY);
-  float edgeSoftness = mix(0.045, 0.16, uStretchY);
+  float reach = mix(0.15, 1.34, uStretchY);
+  float edgeSoftness = mix(0.07, 0.3, uStretchY);
   float verticalMask = 1.0 - smoothstep(reach, reach + edgeSoftness, absY);
   float centerSeed = 1.0 - smoothstep(0.0, 0.13, absY);
   float movingTips = exp(-pow((absY - reach) / max(edgeSoftness, 0.001), 2.0));
@@ -59,25 +59,27 @@ void main() {
   float sideTension = halo * verticalGrain * uStretchY;
   float boundaryGate = uGravity * softTopBottom;
 
-  vec3 cool = vec3(0.30, 0.50, 0.70);
-  vec3 pale = vec3(0.58, 0.72, 0.86);
-  vec3 warm = vec3(0.78, 0.62, 0.42);
-  vec3 col = mix(cool, pale, axis);
-  col = mix(col, warm, movingTips * peak * 0.42);
+  vec3 ember = vec3(0.86, 0.36, 0.13);
+  vec3 amber = vec3(1.0, 0.68, 0.34);
+  vec3 chromaBlue = vec3(0.16, 0.28, 0.95);
+  vec3 col = mix(ember, amber, axis);
+  col += chromaBlue * sideTension * peak * 0.18;
+  col.r += movingTips * peak * 0.22;
+  col.g *= 0.84;
   col *= boundaryGate * uLightColumn * (
-    grownColumn * 1.22 +
-    tipGlow * 0.58 +
-    sideTension * 0.28
+    grownColumn * 1.36 +
+    tipGlow * 0.74 +
+    sideTension * 0.34
   );
 
   float alpha = clamp(
     boundaryGate * (
-      grownColumn * 0.52 +
-      tipGlow * 0.34 +
-      sideTension * 0.16
+      grownColumn * 0.6 +
+      tipGlow * 0.42 +
+      sideTension * 0.2
     ),
     0.0,
-    0.58
+    0.68
   );
   gl_FragColor = vec4(col, alpha);
 }
