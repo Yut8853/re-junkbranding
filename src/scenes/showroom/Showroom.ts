@@ -119,7 +119,7 @@ void main() {
   float split = intensity * (2.0 + peak * 5.8);
   float glitch = glitchStripe(uv, intensity * peak);
   float centerGlow = 1.0 - smoothstep(0.0, 0.84, distance(uv, vec2(0.5, 0.48)));
-  vec3 radialBg = mix(vec3(0.025, 0.022, 0.026), vec3(0.44, 0.25, 0.12), pow(centerGlow, 1.55));
+  vec3 radialBg = mix(vec3(0.025, 0.022, 0.026), vec3(0.82, 0.84, 0.88), pow(centerGlow, 1.55) * 0.42);
 
   vec2 uvA = distortedUv(uv, -1.0);
   vec2 uvB = distortedUv(uv, 1.0);
@@ -145,9 +145,9 @@ void main() {
   gravityGlow = pow(max(gravityGlow, 0.0), 2.2) * intensity;
   vec3 mixed = mix(colorA, colorB, handoff);
   mixed = mix(radialBg, mixed, max(sampleA.a, sampleB.a));
-  mixed += vec3(0.95, 0.46, 0.18) * pow(centerGlow, 2.4) * 0.08;
-  mixed += vec3(1.0, 0.78, 0.46) * gravityGlow * 0.1;
-  mixed += vec3(1.0, 0.18, 0.08) * glitch * 0.16;
+  mixed += vec3(0.92, 0.94, 1.0) * pow(centerGlow, 2.4) * 0.08;
+  mixed += vec3(0.88, 0.94, 1.0) * gravityGlow * 0.1;
+  mixed += vec3(0.92, 0.98, 1.0) * glitch * 0.1;
   mixed += vec3(0.18, 0.36, 1.0) * glitch * 0.08;
   mixed.g *= 1.0 - glitch * 0.14;
 
@@ -211,6 +211,13 @@ type WaterParams = {
   -readonly [K in keyof WaterPreset]: WaterPreset[K] extends boolean ? boolean : number;
 };
 
+type WaterColorParams = {
+  base: string;
+  shallow: string;
+  crest: string;
+  brightness: number;
+};
+
 type NightSeaEvent = {
   time: number;
   type: 'wavePulse' | 'sparkle';
@@ -243,6 +250,15 @@ function lerp(a: number, b: number, t: number): number {
 
 function cloneDefaultWaterPreset(): WaterParams {
   return { ...WATER_PRESET };
+}
+
+function cloneDefaultWaterColors(): WaterColorParams {
+  return {
+    base: '#06384b',
+    shallow: '#0f83a9',
+    crest: '#bcefff',
+    brightness: 1.38,
+  };
 }
 
 function fullHdFrameSize(area: number): [number, number] {
@@ -297,6 +313,7 @@ export class Showroom {
   private readonly exhibitVideos: HTMLVideoElement[] = [];
   private readonly disposables: Array<THREE.BufferGeometry | THREE.Material | THREE.Texture> = [];
   private readonly waterParams: WaterParams = cloneDefaultWaterPreset();
+  private readonly waterColors: WaterColorParams = cloneDefaultWaterColors();
   private gravityTarget = 0;
   private gravity = 0;
   private gravityProgressTarget = 0;
@@ -383,7 +400,10 @@ export class Showroom {
       uniforms: {
         uTime: { value: 0 },
         uExposure: { value: 1 },
-        uBase: { value: new THREE.Color(0x03090e) },
+        uBase: { value: new THREE.Color(this.waterColors.base) },
+        uShallow: { value: new THREE.Color(this.waterColors.shallow) },
+        uCrest: { value: new THREE.Color(this.waterColors.crest) },
+        uBrightness: { value: this.waterColors.brightness },
         uCamPos: { value: this.camPos },
         uWaveStrength: { value: this.waterParams.waveStrength },
         uWaveScale: { value: this.waterParams.waveScale },
@@ -538,7 +558,7 @@ export class Showroom {
     const spotMat = this.track(
       new THREE.SpriteMaterial({
         map: spotTex,
-        color: theme === 'luzReal' ? 0xbcd2f0 : 0xffe7c4,
+        color: theme === 'luzReal' ? 0xdcecff : 0xf3f7ff,
         transparent: true,
         opacity: 0.16,
         depthWrite: false,
@@ -567,6 +587,14 @@ export class Showroom {
   private buildMotes(): void {
     const count = 86;
     const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const palette = [
+      new THREE.Color(0x8fd8ff),
+      new THREE.Color(0xff9bd6),
+      new THREE.Color(0xa7ffcf),
+      new THREE.Color(0xb6a6ff),
+      new THREE.Color(0xfff0a8),
+    ];
     this.moteBasePositions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const radius = Math.pow(Math.random(), 0.72);
@@ -583,16 +611,24 @@ export class Showroom {
       this.moteBasePositions[i * 3 + 2] = z;
       this.moteSpeeds.push(0.55 + Math.random() * 0.85);
       this.moteSeeds.push(Math.random() * Math.PI * 2);
+
+      const color = palette[i % palette.length].clone();
+      color.lerp(palette[(i * 3 + 2) % palette.length], Math.random() * 0.42);
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
     }
     const geo = this.track(new THREE.BufferGeometry());
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const glow = this.track(makeGlowTexture());
     const mat = this.track(
       new THREE.PointsMaterial({
         size: 0.18,
         map: glow,
-        color: 0xff8a2f,
+        color: 0xffffff,
+        vertexColors: true,
         transparent: true,
         opacity: 0.72,
         depthWrite: false,

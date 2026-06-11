@@ -8,6 +8,9 @@ varying vec3 vNormal;
 uniform float uTime;
 uniform float uExposure;  // global brightness (dims through Meaning / Issue)
 uniform vec3 uBase;       // deepest water colour
+uniform vec3 uShallow;    // lit water colour
+uniform vec3 uCrest;      // wave highlight colour
+uniform float uBrightness;
 uniform vec3 uCamPos;
 uniform float uWaveStrength;
 uniform float uWaveScale;
@@ -50,7 +53,7 @@ void main() {
   float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0);
 
   vec3 deep = uBase;
-  vec3 shallow = vec3(0.025, 0.055, 0.075);
+  vec3 shallow = uShallow;
   vec3 col = mix(deep, shallow, 0.35 + fresnel * 0.55);
   col *= mix(1.0, 0.48, clamp(uDepthDarkness, 0.0, 1.0));
 
@@ -63,7 +66,7 @@ void main() {
   crests *= smoothstep(42.0, 4.0, length(vWorld - uCamPos));
   crests *= uWaveStrength * 8.0 + uRippleStrength * 5.0;
 
-  col += vec3(0.55, 0.72, 0.82) * crests * 0.075;
+  col += uCrest * crests * 0.075;
   col += vec3(0.018, 0.03, 0.04) * fresnel * 0.16;
 
   // Keep the gallery edges dark so the exhibits and Hero copy stay dominant.
@@ -71,7 +74,7 @@ void main() {
   float dCam = length(vWorld - uCamPos);
   float distanceFade = mix(1.0, smoothstep(78.0, 4.0, dCam), uHorizonFade);
   float vignette = mix(1.0 - uVignetteStrength, 1.0, sideFalloff);
-  col *= vignette * distanceFade * mix(1.0, uExposure, uFogStrength);
+  col *= vignette * distanceFade * mix(1.0, uExposure, uFogStrength) * uBrightness;
 
   if (uShowWaterOnly > 0.5) {
     col = mix(deep, shallow, 0.5) + vec3(crests * 0.12);

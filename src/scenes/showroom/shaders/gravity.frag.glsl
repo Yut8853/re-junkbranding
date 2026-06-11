@@ -59,13 +59,12 @@ void main() {
   float sideTension = halo * verticalGrain * uStretchY;
   float boundaryGate = uGravity * softTopBottom;
 
-  vec3 ember = vec3(0.86, 0.36, 0.13);
-  vec3 amber = vec3(1.0, 0.68, 0.34);
-  vec3 chromaBlue = vec3(0.16, 0.28, 0.95);
-  vec3 col = mix(ember, amber, axis);
-  col += chromaBlue * sideTension * peak * 0.18;
-  col.r += movingTips * peak * 0.22;
-  col.g *= 0.84;
+  vec3 pearl = vec3(0.74, 0.82, 1.0);
+  vec3 white = vec3(1.0, 0.98, 0.92);
+  vec3 chromaBlue = vec3(0.22, 0.42, 1.0);
+  vec3 col = mix(pearl, white, axis);
+  col += chromaBlue * sideTension * peak * 0.16;
+  col += vec3(1.0) * movingTips * peak * 0.12;
   col *= boundaryGate * uLightColumn * (
     grownColumn * 1.36 +
     tipGlow * 0.74 +

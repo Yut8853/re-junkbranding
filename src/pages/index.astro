@@ -13,7 +13,7 @@ import Issue from '../components/Issue.astro';
   </div>
 
   <a class="site-logo" href="/" aria-label="JUNK BRANDING トップへ">
-    <span class="site-logo__main">JUNK BRANDING</span>
+    <span class="site-logo__main">JUNKBRANDING</span>
   </a>
 
   <main class="page">
@@ -79,9 +79,9 @@ import Issue from '../components/Issue.astro';
     background:
       radial-gradient(
         circle at 50% 46%,
-        rgba(226, 128, 58, 0.38) 0%,
-        rgba(132, 70, 42, 0.24) 28%,
-        rgba(34, 23, 22, 0.82) 62%,
+        rgba(244, 248, 255, 0.26) 0%,
+        rgba(124, 148, 178, 0.14) 28%,
+        rgba(18, 21, 28, 0.82) 62%,
         #07070b 100%
       );
   }
@@ -135,7 +135,7 @@ import Issue from '../components/Issue.astro';
   }
 
   .site-logo:focus-visible {
-    outline: 2px solid rgba(255, 172, 88, 0.76);
+    outline: 2px solid rgba(210, 232, 255, 0.76);
     outline-offset: 6px;
   }
 
@@ -165,11 +165,11 @@ import Issue from '../components/Issue.astro';
     width: 3.25rem;
     height: 3.25rem;
     padding: 0;
-    border: 1px solid rgba(255, 216, 168, 0.18);
+    border: 1px solid rgba(225, 238, 255, 0.18);
     border-radius: 999px;
-    color: rgba(255, 225, 190, 0.78);
+    color: rgba(235, 242, 255, 0.78);
     background:
-      radial-gradient(circle at 50% 35%, rgba(255, 156, 72, 0.18), transparent 62%),
+      radial-gradient(circle at 50% 35%, rgba(235, 244, 255, 0.18), transparent 62%),
       rgba(7, 7, 11, 0.54);
     box-shadow:
       0 1rem 2.4rem rgba(0, 0, 0, 0.34),
@@ -188,24 +188,24 @@ import Issue from '../components/Issue.astro';
 
   .music-toggle:hover {
     transform: translateY(-2px);
-    border-color: rgba(255, 191, 118, 0.34);
-    color: #ffd7a2;
+    border-color: rgba(220, 236, 255, 0.34);
+    color: #eef6ff;
   }
 
   .music-toggle:focus-visible {
-    outline: 2px solid rgba(255, 172, 88, 0.76);
+    outline: 2px solid rgba(210, 232, 255, 0.76);
     outline-offset: 4px;
   }
 
   .music-toggle.is-on {
-    color: #ffb45f;
-    border-color: rgba(255, 170, 84, 0.52);
+    color: #f4f8ff;
+    border-color: rgba(218, 236, 255, 0.52);
     background:
-      radial-gradient(circle at 50% 45%, rgba(255, 145, 46, 0.38), rgba(255, 145, 46, 0.08) 56%, transparent 72%),
-      rgba(18, 12, 10, 0.62);
+      radial-gradient(circle at 50% 45%, rgba(232, 242, 255, 0.34), rgba(232, 242, 255, 0.08) 56%, transparent 72%),
+      rgba(12, 14, 18, 0.62);
     box-shadow:
       0 1rem 2.8rem rgba(0, 0, 0, 0.36),
-      0 0 2rem rgba(255, 132, 42, 0.18),
+      0 0 2rem rgba(222, 238, 255, 0.16),
       inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
@@ -214,7 +214,7 @@ import Issue from '../components/Issue.astro';
     inset: 0.42rem;
     z-index: -1;
     border-radius: inherit;
-    background: rgba(255, 140, 42, 0.18);
+    background: rgba(230, 240, 255, 0.18);
     opacity: 0;
     transform: scale(0.78);
     transition:
@@ -231,7 +231,7 @@ import Issue from '../components/Issue.astro';
   .music-toggle__icon {
     width: 1.35rem;
     height: 1.35rem;
-    filter: drop-shadow(0 0 0.65rem rgba(255, 147, 58, 0.24));
+    filter: drop-shadow(0 0 0.65rem rgba(225, 239, 255, 0.22));
   }
 
   .music-toggle__slash {
@@ -539,9 +539,9 @@ import Issue from '../components/Issue.astro';
             const boundaryScaleY = stretchY + tension * 0.46;
             const glitchKick = tension * Math.sin(progress * Math.PI * 9);
             const chromaShadow = [
-              `${(-7 * tension).toFixed(2)}px ${(2 * tension).toFixed(2)}px 0 rgba(255, 72, 42, ${Math.min(0.34, tension * 0.34).toFixed(3)})`,
+              `${(-7 * tension).toFixed(2)}px ${(2 * tension).toFixed(2)}px 0 rgba(238, 246, 255, ${Math.min(0.3, tension * 0.3).toFixed(3)})`,
               `${(8 * tension).toFixed(2)}px ${(-2 * tension).toFixed(2)}px 0 rgba(64, 104, 255, ${Math.min(0.24, tension * 0.24).toFixed(3)})`,
-              `0 ${(18 * tension).toFixed(2)}px ${(34 * tension).toFixed(2)}px rgba(255, 132, 42, ${Math.min(0.32, tension * 0.32).toFixed(3)})`,
+              `0 ${(18 * tension).toFixed(2)}px ${(34 * tension).toFixed(2)}px rgba(232, 240, 255, ${Math.min(0.28, tension * 0.28).toFixed(3)})`,
               '0 1px 40px rgba(6, 7, 11, 0.6)',
             ].join(', ');
 
@@ -597,13 +597,13 @@ import Issue from '../components/Issue.astro';
             });
             gsap.set(fromText, {
               y: pullY * 0.08,
-              scaleY: 1 + tension * 0.12,
+              scaleY: 1 + tension * 0.24,
               x: glitchKick * 3,
               textShadow: chromaShadow,
             });
             gsap.set(toText, {
               y: -pullY * 0.06,
-              scaleY: 1 + tension * 0.08,
+              scaleY: 1 + tension * 0.16,
               x: glitchKick * -2.4,
               textShadow: chromaShadow,
             });
