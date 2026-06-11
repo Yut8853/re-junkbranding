@@ -107,17 +107,6 @@ import FinalCta from '../components/FinalCta.astro';
     /* Extra breathing room between sections so the gravity transition
        has a long, visible scroll window of its own. */
     --section-gap: clamp(28rem, 130vh, 72rem);
-    --gravity-progress: 0;
-    --gravity-blend: 0;
-    --gravity-pull-y: 0px;
-    --gravity-stretch-y: 1;
-    --gravity-band-height: 80px;
-    --gravity-tension: 0;
-    --gravity-elastic-return: 0;
-    --gravity-boundary-scale-y: 1;
-    --gravity-overlay: 0;
-    --hero-boundary-shift: 0px;
-    --meaning-boundary-shift: 0px;
     --meaning-rise: 3.5rem;
   }
 
@@ -792,7 +781,7 @@ import FinalCta from '../components/FinalCta.astro';
           trigger: gallery,
           start: 'top 68%',
           end: 'bottom 34%',
-          scrub: true,
+          scrub: 0.6,
           invalidateOnRefresh: true,
         },
       });
@@ -844,17 +833,48 @@ import FinalCta from '../components/FinalCta.astro';
           (child): child is HTMLElement => child instanceof HTMLElement,
         );
 
+        // Sections flagged bottom-only (text-dense like the service index, or
+        // very tall like the scatter gallery) keep their readable bulk stable:
+        // the gravity distortion is anchored to the TOP so it only accumulates
+        // toward the bottom edge, the dense text children are left undistorted,
+        // and the whole-block blur is dropped. The boundary pull still plays.
+        const fromBottomOnly = fromSection.hasAttribute('data-gravity-bottom-only');
+        const toBottomOnly = toSection.hasAttribute('data-gravity-bottom-only');
+        const fromInnerOrigin = fromBottomOnly ? '50% 0%' : '50% 64%';
+        const toInnerOrigin = toBottomOnly ? '50% 0%' : '50% 30%';
+        const fromInnerStretch = fromBottomOnly ? 0.12 : 0.34;
+        const toInnerStretch = toBottomOnly ? 0.06 : 0.16;
+        const fromInnerBlurMax = fromBottomOnly ? 0 : 0.62;
+        const toInnerBlurMax = toBottomOnly ? 0 : 0.26;
+        const fromTextTargets = fromBottomOnly ? [] : fromText;
+        const toTextTargets = toBottomOnly ? [] : toText;
+        const shadowTargets = [...fromTextTargets, ...toTextTargets];
+
+        // Ends right before the incoming content enters the viewport,
+        // so the effect is fully over by the time the next section appears.
+        const endPx = () => toSection.offsetTop + toInner.offsetTop - window.innerHeight;
+
+        // Paint-heavy props (filter / textShadow) are only rewritten when the
+        // tension crosses a visible step, tracked here per section pair.
+        let lastTensionBucket = -1;
+
         ScrollTrigger.create({
           trigger: fromSection,
           // Starts once the outgoing content is leaving the upper half of the
           // viewport — never while it is still centred on screen.
-          start: () =>
-            fromSection.offsetTop + fromInner.offsetTop + fromInner.offsetHeight - window.innerHeight * 0.55,
+          start: () => {
+            const contentStart =
+              fromSection.offsetTop + fromInner.offsetTop + fromInner.offsetHeight - window.innerHeight * 0.55;
+            const end = endPx();
+            // Tall sections with centred content (e.g. the 150svh scatter
+            // gallery) can push the content-anchored start past the
+            // boundary-anchored end, collapsing the window to nothing and
+            // killing the transition. Keep at least a usable scroll window.
+            return end > contentStart ? contentStart : end - window.innerHeight * 0.75;
+          },
           endTrigger: toSection,
-          // Ends right before the incoming content enters the viewport,
-          // so the effect is fully over by the time the next section appears.
-          end: () => toSection.offsetTop + toInner.offsetTop - window.innerHeight,
-          scrub: true,
+          end: endPx,
+          scrub: 0.6,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             const progress = self.progress;
@@ -864,31 +884,17 @@ import FinalCta from '../components/FinalCta.astro';
             const returnPhase = smoothstep(0.58, 1, progress);
             const elasticReturn = returnPhase * Math.sin(returnPhase * Math.PI) * viewport * 0.024;
             const pullY = blendAmount * viewport * 0.4 - elasticReturn;
-            const stretchY = 1 + blendAmount * 3;
-            const bandHeight = viewport * (0.32 + blendAmount * 0.72);
             const tension = Math.pow(blendAmount, 1.6);
-            const boundaryScaleY = stretchY + tension * 0.46;
+            // Text reacts earlier than the section bodies (lower exponent ramps
+            // up sooner) and stretches far more dramatically.
+            const textTension = Math.pow(blendAmount, 0.55);
             const glitchKick = tension * Math.sin(progress * Math.PI * 9);
-            const chromaShadow = [
-              `${(-7 * tension).toFixed(2)}px ${(2 * tension).toFixed(2)}px 0 rgba(238, 246, 255, ${Math.min(0.3, tension * 0.3).toFixed(3)})`,
-              `${(8 * tension).toFixed(2)}px ${(-2 * tension).toFixed(2)}px 0 rgba(64, 104, 255, ${Math.min(0.24, tension * 0.24).toFixed(3)})`,
-              `0 ${(18 * tension).toFixed(2)}px ${(34 * tension).toFixed(2)}px rgba(232, 240, 255, ${Math.min(0.28, tension * 0.28).toFixed(3)})`,
-              '0 1px 40px rgba(6, 7, 11, 0.6)',
-            ].join(', ');
 
-            page.style.setProperty('--gravity-progress', progress.toFixed(4));
-            page.style.setProperty('--gravity-blend', blendAmount.toFixed(4));
-            page.style.setProperty('--gravity-pull-y', `${pullY.toFixed(2)}px`);
-            page.style.setProperty('--gravity-stretch-y', stretchY.toFixed(4));
-            page.style.setProperty('--gravity-band-height', `${bandHeight.toFixed(2)}px`);
-            page.style.setProperty('--gravity-tension', tension.toFixed(4));
-            page.style.setProperty('--gravity-elastic-return', elasticReturn.toFixed(4));
-            page.style.setProperty('--gravity-boundary-scale-y', boundaryScaleY.toFixed(4));
-            page.style.setProperty('--gravity-overlay', Math.min(0.92, 0.18 + tension * 0.72).toFixed(4));
-            page.style.setProperty('--hero-boundary-shift', `${pullY.toFixed(2)}px`);
-            page.style.setProperty('--meaning-boundary-shift', `${(-pullY).toFixed(2)}px`);
+            // --meaning-rise is the only custom property CSS actually reads; the
+            // others were dead writes that forced a style recalc every frame.
             page.style.setProperty('--meaning-rise', `${((1 - handoff) * 3.5).toFixed(3)}rem`);
 
+            // Transforms only — cheap and GPU-composited — run every frame.
             gsap.set(fromSection, {
               y: -progress * 26 + pullY * 0.08,
               scaleY: 1 + tension * 0.06,
@@ -910,34 +916,52 @@ import FinalCta from '../components/FinalCta.astro';
             }
             gsap.set(fromInner, {
               y: -progress * 30 + pullY * 0.3,
-              scaleY: 1 + tension * 0.34,
+              scaleY: 1 + tension * fromInnerStretch,
               scaleX: 1 - tension * 0.035,
               skewY: -blendAmount * 0.28 + glitchKick * 0.16,
               autoAlpha: 1 - progress * 0.3,
-              filter: `blur(${(tension * 0.62).toFixed(2)}px) saturate(${(1 + tension * 0.42).toFixed(3)})`,
-              transformOrigin: '50% 64%',
+              transformOrigin: fromInnerOrigin,
             });
             gsap.set(toInner, {
               y: (1 - handoff) * 42 - pullY * 0.16,
-              scaleY: 1 + tension * 0.16,
+              scaleY: 1 + tension * toInnerStretch,
               scaleX: 1 - tension * 0.02,
               skewY: blendAmount * 0.2 * (progress < 0.5 ? 1 : -1),
               autoAlpha: 0.86 + handoff * 0.14,
-              filter: `blur(${(tension * 0.26).toFixed(2)}px) saturate(${(1 + tension * 0.22).toFixed(3)})`,
-              transformOrigin: '50% 30%',
+              transformOrigin: toInnerOrigin,
             });
-            gsap.set(fromText, {
+            gsap.set(fromTextTargets, {
               y: pullY * 0.08,
-              scaleY: 1 + tension * 0.24,
+              scaleY: 1 + textTension * 2.4,
               x: glitchKick * 3,
-              textShadow: chromaShadow,
             });
-            gsap.set(toText, {
+            gsap.set(toTextTargets, {
               y: -pullY * 0.06,
-              scaleY: 1 + tension * 0.16,
+              scaleY: 1 + textTension * 1.6,
               x: glitchKick * -2.4,
-              textShadow: chromaShadow,
             });
+
+            // Blur / saturate filters and the multi-layer text shadow are the
+            // expensive (paint-triggering) parts. Rebuild and write them only
+            // when tension changes by a visible step — not every frame. This is
+            // what makes the motion buttery without altering the look.
+            const tensionBucket = Math.round(tension * 36);
+            if (tensionBucket !== lastTensionBucket) {
+              lastTensionBucket = tensionBucket;
+              const chromaShadow = [
+                `${(-7 * tension).toFixed(2)}px ${(2 * tension).toFixed(2)}px 0 rgba(238, 246, 255, ${Math.min(0.3, tension * 0.3).toFixed(3)})`,
+                `${(8 * tension).toFixed(2)}px ${(-2 * tension).toFixed(2)}px 0 rgba(64, 104, 255, ${Math.min(0.24, tension * 0.24).toFixed(3)})`,
+                `0 ${(18 * tension).toFixed(2)}px ${(34 * tension).toFixed(2)}px rgba(232, 240, 255, ${Math.min(0.28, tension * 0.28).toFixed(3)})`,
+                '0 1px 40px rgba(6, 7, 11, 0.6)',
+              ].join(', ');
+              gsap.set(fromInner, {
+                filter: `blur(${(tension * fromInnerBlurMax).toFixed(2)}px) saturate(${(1 + tension * 0.42).toFixed(3)})`,
+              });
+              gsap.set(toInner, {
+                filter: `blur(${(tension * toInnerBlurMax).toFixed(2)}px) saturate(${(1 + tension * 0.22).toFixed(3)})`,
+              });
+              gsap.set(shadowTargets, { textShadow: chromaShadow });
+            }
           },
         });
       });
