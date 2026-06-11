@@ -11,7 +11,7 @@ import * as THREE from 'three';
  * when real photography exists; the framing in Showroom.ts stays the same.
  */
 
-export type ExhibitTheme = 'toPlace' | 'luzReal' | 'transB';
+export type ExhibitTheme = 'toPlace' | 'luzReal' | 'transB' | 'iwakiki' | 'junk' | 'next';
 
 function makeCanvas(w: number, h: number) {
   const canvas = document.createElement('canvas');
@@ -206,10 +206,13 @@ function makeTrustTexture(): THREE.CanvasTexture {
 export function makeExhibitTexture(theme: ExhibitTheme): THREE.CanvasTexture {
   switch (theme) {
     case 'toPlace':
+    case 'iwakiki':
       return makeCraftTexture();
     case 'luzReal':
+    case 'junk':
       return makeSpaceTexture();
     case 'transB':
+    case 'next':
       return makeTrustTexture();
   }
 }
@@ -219,6 +222,9 @@ const EXHIBIT_SRC: Record<ExhibitTheme, string> = {
   toPlace: '/exhibits/to-place.webp',
   luzReal: '/exhibits/luz-real.webp',
   transB: '/exhibits/trans-b.webp',
+  iwakiki: '/exhibits/iwakiki.webp',
+  junk: '/exhibits/junk.webp',
+  next: '/exhibits/next.webp',
 };
 
 const exhibitLoader = new THREE.TextureLoader();

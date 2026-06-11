@@ -18,10 +18,17 @@ const GRAVITY_EFFECT = {
   exposureDip: 0.34,
 } as const;
 
+// Particles within this screen-space distance of the cursor snap to it like a
+// magnet; beyond it they keep their normal drift / gather behaviour.
+const MOTE_MAGNET_RADIUS_PX = 400;
+
 const EXHIBIT_VIDEO_SRC: Record<ExhibitTheme, string> = {
   toPlace: '/toplace.mp4',
   luzReal: '/luzreal.mp4',
   transB: '/trans.mp4',
+  iwakiki: '/iwakiki.mp4',
+  junk: '/junk.mp4',
+  next: '/next.mp4',
 };
 
 const FULL_HD_ASPECT = 16 / 9;
@@ -306,6 +313,8 @@ export class Showroom {
   private moteBasePositions!: Float32Array;
   private moteSpeeds: number[] = [];
   private moteSeeds: number[] = [];
+  private readonly moteProjected = new THREE.Vector3();
+  private readonly moteMagnetPoint = new THREE.Vector3();
   private nightSeaEvents: NightSeaEvent[] = [];
   private nightSeaDuration = 24;
   private lastNightSeaTime: number | null = null;
@@ -579,13 +588,13 @@ export class Showroom {
   }
 
   private buildExhibits(): void {
-    // Six works placed with a slightly irregular left/right gallery rhythm.
+    // Six works — one per site video — in a slightly irregular gallery rhythm.
     this.exhibit('toPlace', [7.35, 3.45, -2.8], -1, fullHdFrameSize(3.0 * 3.7));
     this.exhibit('transB', [-7.25, 1.8, -5.7], 1, fullHdFrameSize(2.35 * 3.05));
     this.exhibit('luzReal', [-7.45, 3.85, -9.2], 1, fullHdFrameSize(3.35 * 4.45));
-    this.exhibit('toPlace', [7.55, 2.05, -12.1], -1, fullHdFrameSize(2.45 * 3.1));
-    this.exhibit('transB', [7.2, 3.25, -15.7], -1, fullHdFrameSize(3.15 * 4.05));
-    this.exhibit('luzReal', [-7.05, 2.72, -19.6], 1, fullHdFrameSize(2.55 * 3.25));
+    this.exhibit('iwakiki', [7.55, 2.05, -12.1], -1, fullHdFrameSize(2.45 * 3.1));
+    this.exhibit('junk', [7.2, 3.25, -15.7], -1, fullHdFrameSize(3.15 * 4.05));
+    this.exhibit('next', [-7.05, 2.72, -19.6], 1, fullHdFrameSize(2.55 * 3.25));
   }
 
   private buildMotes(): void {
@@ -797,6 +806,12 @@ export class Showroom {
     this.gravityMat.uniforms.uDirection.value = this.gravityDirection;
 
     // Warm particles drift in the room, then gather toward the central pull.
+    // A cursor magnet overrides both: any particle whose screen position is
+    // within MOTE_MAGNET_RADIUS_PX of the pointer snaps toward it; outside
+    // that radius the behaviour is untouched.
+    this.camera.updateMatrixWorld();
+    const halfW = window.innerWidth * 0.5;
+    const halfH = window.innerHeight * 0.5;
     const attr = this.motes.geometry.getAttribute('position') as THREE.BufferAttribute;
     const arr = attr.array as Float32Array;
     for (let i = 0; i < this.moteSpeeds.length; i++) {
@@ -820,10 +835,41 @@ export class Showroom {
       const gatheredY = centerY + Math.sin(drift * 1.08) * swirlRadius * 1.25;
       const gatheredZ = centerZ + Math.sin(seed + drift * 0.52) * 0.62;
 
-      arr[offset] = lerp(idleX, gatheredX, gather);
-      arr[offset + 1] = lerp(idleY, gatheredY, gather);
-      arr[offset + 2] = lerp(idleZ, gatheredZ, gather);
+      let x = lerp(idleX, gatheredX, gather);
+      let y = lerp(idleY, gatheredY, gather);
+      let z = lerp(idleZ, gatheredZ, gather);
+
+      if (!this.reduced) {
+        // Screen-space distance from this particle to the cursor.
+        this.moteProjected.set(x, y, z).project(this.camera);
+        if (this.moteProjected.z > -1 && this.moteProjected.z < 1) {
+          const dxPx = (this.moteProjected.x - px) * halfW;
+          const dyPx = (this.moteProjected.y - py) * halfH;
+          const distPx = Math.hypot(dxPx, dyPx);
+          if (distPx < MOTE_MAGNET_RADIUS_PX) {
+            // 0 at the radius edge -> 1 on the cursor, eased so the catch
+            // feels magnetic (gentle at the rim, decisive near the centre).
+            const m = 1 - distPx / MOTE_MAGNET_RADIUS_PX;
+            const stick = m * m * (3 - 2 * m);
+            // The cursor's world position at this particle's depth, with a
+            // small per-particle orbit so they cling as a cloud, not a dot.
+            this.moteMagnetPoint.set(px, py, this.moteProjected.z).unproject(this.camera);
+            const ring = 0.16 + (1 - stick) * 0.22;
+            const magnetX = this.moteMagnetPoint.x + Math.cos(seed * 4.7 + drift * 1.6) * ring;
+            const magnetY = this.moteMagnetPoint.y + Math.sin(seed * 3.3 + drift * 1.9) * ring;
+            const magnetZ = this.moteMagnetPoint.z + Math.sin(seed * 2.2 + drift * 0.8) * 0.1;
+            x = lerp(x, magnetX, stick);
+            y = lerp(y, magnetY, stick);
+            z = lerp(z, magnetZ, stick);
+          }
+        }
+      }
+
+      arr[offset] = x;
+      arr[offset + 1] = y;
+      arr[offset + 2] = z;
     }
+
     attr.needsUpdate = true;
     const moteMat = this.motes.material as THREE.PointsMaterial;
     moteMat.opacity = Math.min(1, 0.78 + this.sparklePulse * 0.32 + gravityStretch * 0.22);
