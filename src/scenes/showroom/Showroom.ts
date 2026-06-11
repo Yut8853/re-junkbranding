@@ -5,7 +5,7 @@ import floorFrag from './shaders/floor.frag.glsl?raw';
 import gravityVert from './shaders/gravity.vert.glsl?raw';
 import gravityFrag from './shaders/gravity.frag.glsl?raw';
 import { WATER_PRESET, type WaterPreset } from './presets/waterPreset';
-import { loadExhibitTexture, makeGlowTexture, type ExhibitTheme } from './textures';
+import { makeExhibitTexture, makeGlowTexture, type ExhibitTheme } from './textures';
 
 const BG = 0x09070a;
 const FAR_Z = -30;
@@ -17,6 +17,14 @@ const GRAVITY_EFFECT = {
   cameraLift: 0.34,
   exposureDip: 0.34,
 } as const;
+
+const EXHIBIT_VIDEO_SRC: Record<ExhibitTheme, string> = {
+  toPlace: '/toplace.mp4',
+  luzReal: '/luzreal.mp4',
+  transB: '/trans.mp4',
+};
+
+const FULL_HD_ASPECT = 16 / 9;
 
 const COMPOSITE_VERT = /* glsl */ `
 varying vec2 vUv;
@@ -150,6 +158,55 @@ void main() {
 }
 `;
 
+const EXHIBIT_VERT = /* glsl */ `
+varying vec2 vUv;
+
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const EXHIBIT_FRAG = /* glsl */ `
+precision highp float;
+
+uniform sampler2D uMap;
+uniform vec2 uImageSize;
+uniform vec2 uFrameSize;
+uniform vec3 uTint;
+uniform float uImageScroll;
+
+varying vec2 vUv;
+
+vec2 coverUv(vec2 uv) {
+  float frameAspect = uFrameSize.x / max(uFrameSize.y, 0.0001);
+  float imageAspect = uImageSize.x / max(uImageSize.y, 0.0001);
+  vec2 scale = vec2(1.0);
+
+  if (imageAspect > frameAspect) {
+    scale.x = frameAspect / imageAspect;
+  } else {
+    scale.y = imageAspect / frameAspect;
+  }
+
+  vec2 covered = (uv - 0.5) * scale + 0.5;
+  float verticalTravel = max(0.0, 1.0 - scale.y);
+  covered.y += verticalTravel * (0.5 - clamp(uImageScroll, 0.0, 1.0));
+  return clamp(covered, vec2(0.001), vec2(0.999));
+}
+
+void main() {
+  vec2 uv = coverUv(vUv);
+  vec4 texel = texture2D(uMap, uv);
+
+  float edge = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+  float innerShadow = 1.0 - smoothstep(0.0, 0.13, edge) * 0.12;
+  vec3 color = texel.rgb * uTint * innerShadow;
+
+  gl_FragColor = vec4(color, 1.0);
+}
+`;
+
 type WaterParams = {
   -readonly [K in keyof WaterPreset]: WaterPreset[K] extends boolean ? boolean : number;
 };
@@ -186,6 +243,11 @@ function lerp(a: number, b: number, t: number): number {
 
 function cloneDefaultWaterPreset(): WaterParams {
   return { ...WATER_PRESET };
+}
+
+function fullHdFrameSize(area: number): [number, number] {
+  const width = Math.sqrt(area * FULL_HD_ASPECT);
+  return [width, width / FULL_HD_ASPECT];
 }
 
 /**
@@ -232,6 +294,7 @@ export class Showroom {
   private lastNightSeaTime: number | null = null;
   private sparklePulse = 0;
   private wavePulse = 0;
+  private readonly exhibitVideos: HTMLVideoElement[] = [];
   private readonly disposables: Array<THREE.BufferGeometry | THREE.Material | THREE.Texture> = [];
   private readonly waterParams: WaterParams = cloneDefaultWaterPreset();
   private gravityTarget = 0;
@@ -373,6 +436,76 @@ export class Showroom {
     this.scene.add(this.gravityPlane);
   }
 
+  private textureSize(tex: THREE.Texture): THREE.Vector2 {
+    const image = tex.image as { width?: number; height?: number } | undefined;
+    return new THREE.Vector2(image?.width || 640, image?.height || 800);
+  }
+
+  private playExhibitVideo(video: HTMLVideoElement): void {
+    const play = video.play();
+    if (play) play.catch(() => undefined);
+  }
+
+  private makeExhibitVideo(theme: ExhibitTheme): HTMLVideoElement {
+    const video = document.createElement('video');
+    video.src = EXHIBIT_VIDEO_SRC[theme];
+    video.muted = true;
+    video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.setAttribute('muted', '');
+    video.setAttribute('loop', '');
+    video.setAttribute('autoplay', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    video.addEventListener('canplay', () => this.playExhibitVideo(video), { once: true });
+    video.load();
+    this.exhibitVideos.push(video);
+    return video;
+  }
+
+  private makeExhibitPlateMaterial(theme: ExhibitTheme, size: [number, number]): THREE.ShaderMaterial {
+    const placeholder = this.track(makeExhibitTexture(theme));
+    placeholder.wrapS = THREE.ClampToEdgeWrapping;
+    placeholder.wrapT = THREE.ClampToEdgeWrapping;
+
+    const mat = this.track(
+      new THREE.ShaderMaterial({
+        vertexShader: EXHIBIT_VERT,
+        fragmentShader: EXHIBIT_FRAG,
+        uniforms: {
+          uMap: { value: placeholder },
+          uImageSize: { value: this.textureSize(placeholder) },
+          uFrameSize: { value: new THREE.Vector2(size[0], size[1]) },
+          uTint: { value: new THREE.Color(0xcfd0d6) },
+          uImageScroll: { value: 0 },
+        },
+      }),
+    );
+
+    const video = this.makeExhibitVideo(theme);
+    const videoTex = this.track(new THREE.VideoTexture(video));
+    videoTex.colorSpace = THREE.SRGBColorSpace;
+    videoTex.minFilter = THREE.LinearFilter;
+    videoTex.magFilter = THREE.LinearFilter;
+    videoTex.wrapS = THREE.ClampToEdgeWrapping;
+    videoTex.wrapT = THREE.ClampToEdgeWrapping;
+
+    const applyVideoTexture = () => {
+      mat.uniforms.uMap.value = videoTex;
+      mat.uniforms.uImageSize.value.set(video.videoWidth || 1920, video.videoHeight || 1080);
+    };
+
+    if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      applyVideoTexture();
+    } else {
+      video.addEventListener('loadedmetadata', applyVideoTexture, { once: true });
+    }
+
+    return mat;
+  }
+
   private exhibit(
     theme: ExhibitTheme,
     pos: [number, number, number],
@@ -392,19 +525,9 @@ export class Showroom {
     );
     group.add(frame);
 
-    // The work itself: a photograph hung on the wall. Loads from
-    // public/exhibits/<theme>.webp; until then a painted placeholder stands in.
-    // color slightly below white keeps the print from glowing in the dim room.
-    const plateMat = this.track(
-      new THREE.MeshBasicMaterial({ color: 0xcfd0d6, fog: true }),
-    );
-    plateMat.map = this.track(
-      loadExhibitTexture(theme, (tex) => {
-        this.track(tex);
-        plateMat.map = tex;
-        plateMat.needsUpdate = true;
-      }),
-    );
+    // The work itself: an autoplaying website video, cropped inside a fixed frame.
+    // The wall, frame and plane stay still while the video texture loops.
+    const plateMat = this.makeExhibitPlateMaterial(theme, size);
     const plate = new THREE.Mesh(this.track(new THREE.PlaneGeometry(pw, ph)), plateMat);
     plate.position.z = 0.02;
     group.add(plate);
@@ -415,7 +538,7 @@ export class Showroom {
     const spotMat = this.track(
       new THREE.SpriteMaterial({
         map: spotTex,
-        color: theme === 'space' ? 0xbcd2f0 : 0xffe7c4,
+        color: theme === 'luzReal' ? 0xbcd2f0 : 0xffe7c4,
         transparent: true,
         opacity: 0.16,
         depthWrite: false,
@@ -435,13 +558,10 @@ export class Showroom {
   }
 
   private buildExhibits(): void {
-    // Three works, each a kind of value, placed with intent along the path:
-    //   Craft — closest and intimate (small, low, warm): the making.
-    //   Space — mid, taller and airier: the atmosphere of a place.
-    //   Trust — deepest, near the light, calm and centred: the relationship.
-    this.exhibit('craft', [6.6, 2.4, -7], -1, [3.0, 3.7]);
-    this.exhibit('space', [-6.8, 3.0, -14], 1, [3.4, 4.6]);
-    this.exhibit('trust', [6.9, 2.7, -21], -1, [3.1, 4.0]);
+    // Three works placed with the same intent along the existing path.
+    this.exhibit('toPlace', [6.6, 2.4, -7], -1, fullHdFrameSize(3.0 * 3.7));
+    this.exhibit('luzReal', [-6.8, 3.0, -14], 1, fullHdFrameSize(3.4 * 4.6));
+    this.exhibit('transB', [6.9, 2.7, -21], -1, fullHdFrameSize(3.1 * 4.0));
   }
 
   private buildMotes(): void {
@@ -714,18 +834,24 @@ export class Showroom {
     if (this.raf) return;
     if (this.disposed) return;
     this.clock.start();
+    for (const video of this.exhibitVideos) this.playExhibitVideo(video);
     this.frame();
   }
 
   stop(): void {
     if (this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
+    for (const video of this.exhibitVideos) video.pause();
   }
 
   dispose(): void {
     this.disposed = true;
     this.stop();
     window.removeEventListener('resize', this.resize);
+    for (const video of this.exhibitVideos) {
+      video.removeAttribute('src');
+      video.load();
+    }
     for (const d of this.disposables) d.dispose();
     this.sceneTargetA.dispose();
     this.sceneTargetB.dispose();
