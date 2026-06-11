@@ -1,0 +1,248 @@
+---
+/**
+ * アンビエントミュージックのドック。
+ * 右下の ON/OFF トグル、左下の自動再生の案内、ループ再生の audio 要素を持つ。
+ * 動作のロジックは src/scripts/music.ts (initMusic) にある。
+ */
+---
+
+<button
+  class="music-toggle"
+  type="button"
+  aria-label="音楽を再生"
+  aria-pressed="false"
+  title="Music"
+  data-music-toggle
+>
+  <span class="music-toggle__halo" aria-hidden="true"></span>
+  <svg class="music-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      class="music-toggle__speaker"
+      d="M4.75 9.25h3.7l4.8-3.75v13l-4.8-3.75h-3.7z"
+      fill="none"
+      stroke="currentColor"
+      stroke-linejoin="round"
+      stroke-width="1.7"
+    />
+    <path
+      class="music-toggle__wave music-toggle__wave--inner"
+      d="M16 9.1c.82.78 1.23 1.74 1.23 2.9s-.41 2.12-1.23 2.9"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-width="1.7"
+    />
+    <path
+      class="music-toggle__wave music-toggle__wave--outer"
+      d="M18.45 6.9c1.36 1.37 2.04 3.06 2.04 5.1s-.68 3.73-2.04 5.1"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-width="1.7"
+    />
+    <path
+      class="music-toggle__slash"
+      d="M5.2 4.8 19 19.2"
+      fill="none"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-width="1.8"
+    />
+  </svg>
+</button>
+
+<p class="music-notice" data-music-notice>
+  <span class="music-notice__dot" aria-hidden="true"></span>
+  画面を操作すると音楽が流れます。<br>右下のボタンでON / OFFできます
+</p>
+
+<audio data-music-loop src="/noctiluca_night_sea_loop.wav" preload="none" loop></audio>
+
+<style>
+  .music-toggle {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    padding: 0;
+    border: 1px solid rgba(225, 238, 255, 0.18);
+    border-radius: 999px;
+    color: rgba(235, 242, 255, 0.78);
+    background:
+      radial-gradient(circle at 50% 35%, rgba(235, 244, 255, 0.18), transparent 62%),
+      rgba(36, 80, 126, 0.56);
+    box-shadow:
+      0 1rem 2.4rem rgba(35, 83, 128, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+    cursor: pointer;
+    isolation: isolate;
+    transition:
+      color 0.28s ease,
+      border-color 0.28s ease,
+      background 0.28s ease,
+      transform 0.28s ease,
+      box-shadow 0.28s ease;
+  }
+
+  .music-notice {
+    position: fixed;
+    left: max(1.1rem, env(safe-area-inset-left));
+    bottom: max(1.1rem, env(safe-area-inset-bottom));
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 0.55em;
+    max-width: min(72vw, 24rem);
+    margin: 0;
+    padding: 0.62rem 0.95rem;
+    border: 1px solid rgba(225, 238, 255, 0.16);
+    border-radius: 999px;
+    color: rgba(232, 240, 255, 0.78);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+    background:
+      radial-gradient(circle at 18% 35%, rgba(235, 244, 255, 0.14), transparent 60%),
+      rgba(36, 80, 126, 0.56);
+    box-shadow:
+      0 0.8rem 2rem rgba(35, 83, 128, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+    pointer-events: none;
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+  }
+
+  .music-notice__dot {
+    flex: none;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: rgba(214, 234, 255, 0.92);
+    box-shadow: 0 0 0.7rem rgba(214, 234, 255, 0.65);
+    animation: musicPulse 2.4s ease-in-out infinite;
+  }
+
+  .music-notice.is-hidden {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+
+  .music-toggle:hover {
+    transform: translateY(-2px);
+    border-color: rgba(220, 236, 255, 0.34);
+    color: #eef6ff;
+  }
+
+  .music-toggle:focus-visible {
+    outline: 2px solid rgba(210, 232, 255, 0.76);
+    outline-offset: 4px;
+  }
+
+  .music-toggle.is-on {
+    color: #f4f8ff;
+    border-color: rgba(218, 236, 255, 0.52);
+    background:
+      radial-gradient(circle at 50% 45%, rgba(232, 242, 255, 0.34), rgba(232, 242, 255, 0.08) 56%, transparent 72%),
+      rgba(12, 14, 18, 0.62);
+    box-shadow:
+      0 1rem 2.8rem rgba(0, 0, 0, 0.36),
+      0 0 2rem rgba(222, 238, 255, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .music-toggle__halo {
+    position: absolute;
+    inset: 0.42rem;
+    z-index: -1;
+    border-radius: inherit;
+    background: rgba(230, 240, 255, 0.18);
+    opacity: 0;
+    transform: scale(0.78);
+    transition:
+      opacity 0.28s ease,
+      transform 0.28s ease;
+  }
+
+  .music-toggle.is-on .music-toggle__halo {
+    opacity: 1;
+    transform: scale(1);
+    animation: musicPulse 2.4s ease-in-out infinite;
+  }
+
+  .music-toggle__icon {
+    width: 1.35rem;
+    height: 1.35rem;
+    filter: drop-shadow(0 0 0.65rem rgba(225, 239, 255, 0.22));
+  }
+
+  .music-toggle__slash {
+    opacity: 1;
+    transform-origin: center;
+    transition:
+      opacity 0.22s ease,
+      transform 0.22s ease;
+  }
+
+  .music-toggle__wave {
+    opacity: 0.22;
+    transform-origin: 12px 12px;
+    transition:
+      opacity 0.24s ease,
+      transform 0.24s ease;
+  }
+
+  .music-toggle.is-on .music-toggle__slash {
+    opacity: 0;
+    transform: scaleX(0.32) rotate(-8deg);
+  }
+
+  .music-toggle.is-on .music-toggle__wave {
+    opacity: 1;
+  }
+
+  .music-toggle.is-on .music-toggle__wave--outer {
+    animation: musicWave 1.8s ease-in-out infinite;
+  }
+
+  @keyframes musicPulse {
+    0%,
+    100% {
+      opacity: 0.58;
+      transform: scale(0.92);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+  }
+
+  @keyframes musicWave {
+    0%,
+    100% {
+      transform: scale(0.96);
+    }
+
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .music-toggle.is-on .music-toggle__halo,
+    .music-toggle.is-on .music-toggle__wave--outer {
+      animation: none;
+    }
+  }
+</style>

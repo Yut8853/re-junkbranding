@@ -2,7 +2,7 @@
 ---
 
 <section class="hero" data-hero data-transition-from="hero">
-  <!-- Left scrim keeps the copy fully readable over the 3D showroom. -->
+  <!-- 左側のスクリム: 3D ショールームの上でもコピーが完全に読めるようにする。 -->
   <div class="hero__scrim" aria-hidden="true"></div>
 
   <div class="hero__inner">
@@ -19,8 +19,8 @@
     </p>
 
     <div class="hero__scroll" aria-hidden="true">
+      <span class="hero__scroll-text">Scroll</span>
       <span class="hero__scroll-line"></span>
-      Scroll
     </div>
   </div>
 </section>
@@ -31,8 +31,8 @@
     min-height: calc(100svh + var(--blend-overlap));
     display: flex;
     align-items: center;
-    /* Keep the KV centred in the visible viewport (not the taller
-       overlap box) and lift it further up. */
+    /* KV を（重なり込みで高くなったボックスではなく）実際に見えている
+       ビューポートの中央に置き、さらに少し上へ持ち上げる。 */
     padding-bottom: calc(var(--blend-overlap) + 14svh);
     overflow: hidden;
   }
@@ -84,46 +84,61 @@
     font-size: clamp(1rem, 1.9vw, 1.3rem);
     line-height: 2;
     color: var(--ink-dim);
+    text-shadow: 0 1px 18px rgba(20, 45, 80, 0.55);
     max-width: 34ch;
     will-change: transform, opacity, filter, text-shadow;
   }
 
   .hero__scroll {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 0.85rem;
+    gap: 1rem;
     margin-top: clamp(3rem, 8vh, 5rem);
     font-size: 0.72rem;
     letter-spacing: 0.32em;
     text-transform: uppercase;
     color: var(--ink-faint);
+    text-shadow: 0 1px 14px rgba(20, 45, 80, 0.5);
     will-change: transform, opacity, filter;
   }
 
+  .hero__scroll-text {
+    writing-mode: vertical-rl;
+    letter-spacing: 0.32em;
+  }
+
   .hero__scroll-line {
+    position: relative;
     display: block;
-    width: 3.2rem;
-    height: 1px;
-    background: linear-gradient(90deg, var(--ink-faint), transparent);
-    transform-origin: left center;
-    animation: heroScrollLine 2.6s ease-in-out infinite;
+    width: 1px;
+    height: 3.4rem;
+    overflow: hidden;
+    background: rgba(174, 189, 210, 0.22);
+  }
+
+  .hero__scroll-line::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent, var(--ink-faint));
+    animation: heroScrollLine 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   }
 
   @keyframes heroScrollLine {
-    0%,
-    100% {
-      transform: scaleX(0.4);
-      opacity: 0.4;
+    0% {
+      transform: translateY(-100%);
     }
-    50% {
-      transform: scaleX(1);
-      opacity: 1;
+    55% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(100%);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero__scroll-line {
+    .hero__scroll-line::after {
       animation: none;
     }
   }

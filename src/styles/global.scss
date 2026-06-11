@@ -1,18 +1,18 @@
 :root {
-  /* base palette — deep, refined, near-black */
-  --bg: #06070b;
-  --bg-soft: #0a0c12;
-  --ink: #eef1f7;
-  --ink-dim: #9aa2b1;
-  --ink-faint: #5d6675;
-  --line: rgba(255, 255, 255, 0.08);
+  /* 基本パレット — 夕焼け空のフォールバック色 */
+  --bg: #24507e;
+  --bg-soft: #4f8db9;
+  --ink: white;
+  --ink-dim: white;
+  --ink-faint: white;
+  --line: rgba(255, 255, 255, 0.14);
   --warm: #f4dcbb;
 
-  /* layout */
+  /* レイアウト */
   --maxw: 1180px;
   --gutter: clamp(1.25rem, 5vw, 4rem);
 
-  /* type */
+  /* タイポグラフィ */
   --font-sans: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
     system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Shippori Mincho",
@@ -70,7 +70,7 @@ main {
   color: #fff;
 }
 
-/* Shared section rhythm */
+/* セクション共通の余白リズム */
 .section {
   position: relative;
   padding-block: clamp(7rem, 16vh, 12rem);

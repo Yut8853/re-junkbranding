@@ -1,18 +1,19 @@
 import * as THREE from 'three';
 
 /**
- * Procedural exhibit "works".
+ * プロシージャル生成の展示「作品」テクスチャ群。
  *
- * The showroom displays three works, each standing for a kind of value
- * JUNK BRANDING makes visible. No photography is bundled yet, so each work is
- * painted as a lit, atmospheric plate — composed (light, negative space,
- * focal point) like a gallery piece, not a stock card. Swap any `make*Texture`
- * for an image loader (`new THREE.TextureLoader().load('/works/craft.jpg')`)
- * when real photography exists; the framing in Showroom.ts stays the same.
+ * 実写画像がまだ同梱されていないため、各作品は「光・余白・焦点」を
+ * ギャラリー作品のように構図した雰囲気のあるプレートとして Canvas に
+ * 描いている。実写が用意できたら `make*Texture` を画像ローダー
+ * (`new THREE.TextureLoader().load('/works/craft.jpg')`) に差し替えればよく、
+ * Showroom 側の額装処理はそのまま使える。
  */
 
+/** 展示テーマの識別子（サイト制作実績の動画 6 本に対応）。 */
 export type ExhibitTheme = 'toPlace' | 'luzReal' | 'transB' | 'iwakiki' | 'junk' | 'next';
 
+/** 指定サイズの作業用 Canvas と 2D コンテキストを作る。 */
 function makeCanvas(w: number, h: number) {
   const canvas = document.createElement('canvas');
   canvas.width = w;
@@ -21,6 +22,7 @@ function makeCanvas(w: number, h: number) {
   return { canvas, ctx };
 }
 
+/** 画像全体にフィルムグレイン（粒状ノイズ）を足す。 */
 function grain(ctx: CanvasRenderingContext2D, w: number, h: number, amount: number) {
   const img = ctx.getImageData(0, 0, w, h);
   const d = img.data;
@@ -33,6 +35,7 @@ function grain(ctx: CanvasRenderingContext2D, w: number, h: number, amount: numb
   ctx.putImageData(img, 0, 0);
 }
 
+/** 周辺減光（ビネット）を重ねて画面の縁を暗く落とす。 */
 function vignette(ctx: CanvasRenderingContext2D, w: number, h: number, strength: number) {
   const vg = ctx.createRadialGradient(w / 2, h * 0.46, h * 0.28, w / 2, h / 2, h * 0.78);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
@@ -41,6 +44,7 @@ function vignette(ctx: CanvasRenderingContext2D, w: number, h: number, strength:
   ctx.fillRect(0, 0, w, h);
 }
 
+/** Canvas を sRGB の three.js テクスチャへ変換する。 */
 function toTexture(canvas: HTMLCanvasElement): THREE.CanvasTexture {
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -49,8 +53,8 @@ function toTexture(canvas: HTMLCanvasElement): THREE.CanvasTexture {
 }
 
 /**
- * Craft — 手仕事. A focused pool of warm light on a worked surface: the hands,
- * the material, the moment of making. Low, intimate, horizontal grain.
+ * Craft — 手仕事。作業面に落ちる温かい光の渜まり:
+ * 手と素材と、ものづくりの瞬間。低く親密な横方向の質感。
  */
 function makeCraftTexture(): THREE.CanvasTexture {
   const w = 640;
@@ -60,7 +64,7 @@ function makeCraftTexture(): THREE.CanvasTexture {
   ctx.fillStyle = '#140d07';
   ctx.fillRect(0, 0, w, h);
 
-  // A single warm spotlight low-centre — the worktable, the hands.
+  // 画面中央下寄りに温かいスポットライトを 1 灯 — 作業台と手元。
   const lx = w * 0.5;
   const ly = h * 0.62;
   const glow = ctx.createRadialGradient(lx, ly, 10, lx, ly, h * 0.5);
@@ -70,7 +74,7 @@ function makeCraftTexture(): THREE.CanvasTexture {
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, w, h);
 
-  // Material grain — horizontal worked strokes catching the light.
+  // 素材の質感 — 光を拾う横方向の加工跡のストローク。
   ctx.globalAlpha = 0.12;
   ctx.strokeStyle = '#f0c98a';
   for (let i = 0; i < 26; i++) {
@@ -83,7 +87,7 @@ function makeCraftTexture(): THREE.CanvasTexture {
   }
   ctx.globalAlpha = 1;
 
-  // The implied hands/tool — two soft warm masses meeting at the focal point.
+  // 手・道具の暗示 — 焦点で出会う 2 つの柔らかく温かいかたまり。
   for (const dx of [-44, 40]) {
     const g = ctx.createRadialGradient(lx + dx, ly - 10, 0, lx + dx, ly - 10, 70);
     g.addColorStop(0, 'rgba(255,221,170,0.5)');
@@ -100,8 +104,8 @@ function makeCraftTexture(): THREE.CanvasTexture {
 }
 
 /**
- * Space — 空間. The air of a place: architectural depth, a soft window of
- * daylight, calm verticals and breathing negative space. Cool, tall, quiet.
+ * Space — 空間。場の空気: 建築的な奥行き、柔らかな昼光の窓、
+ * 静かな垂直線と呆吸する余白。冷たく、高く、静謐。
  */
 function makeSpaceTexture(): THREE.CanvasTexture {
   const w = 640;
@@ -111,7 +115,7 @@ function makeSpaceTexture(): THREE.CanvasTexture {
   ctx.fillStyle = '#0b0f16';
   ctx.fillRect(0, 0, w, h);
 
-  // A tall soft window of light high-left — daylight entering a room.
+  // 左上に縦長の柔らかな光の窓 — 部屋に入る昼の光。
   const wx = w * 0.34;
   const wy = h * 0.34;
   const win = ctx.createRadialGradient(wx, wy, 8, wx, wy, h * 0.6);
@@ -121,7 +125,7 @@ function makeSpaceTexture(): THREE.CanvasTexture {
   ctx.fillStyle = win;
   ctx.fillRect(0, 0, w, h);
 
-  // Receding floor shaft — light falling across the space (depth).
+  // 奥へ退いていく床の光の帯 — 空間を横切る光（奥行きの表現）。
   ctx.globalAlpha = 0.5;
   const shaft = ctx.createLinearGradient(wx - 60, wy, w * 0.7, h * 0.92);
   shaft.addColorStop(0, 'rgba(223,234,248,0.5)');
@@ -136,7 +140,7 @@ function makeSpaceTexture(): THREE.CanvasTexture {
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Calm verticals — the edges of the architecture, very faint.
+  // 静かな垂直線 — 建築のエッジをごく淡く描く。
   ctx.globalAlpha = 0.16;
   ctx.strokeStyle = '#aebfd8';
   for (const x of [w * 0.2, w * 0.52, w * 0.8]) {
@@ -154,8 +158,8 @@ function makeSpaceTexture(): THREE.CanvasTexture {
 }
 
 /**
- * Trust — 信頼. A single calm human presence: a soft, centred warm glow with
- * generous stillness around it. Reassurance, a person you can rely on.
+ * Trust — 信頼。静かな人の気配がひとつ: 中央の柔らかく温かい発光と、
+ * その周りのたっぷりとした静けさ。安心感、頼れる存在。
  */
 function makeTrustTexture(): THREE.CanvasTexture {
   const w = 640;
@@ -165,14 +169,14 @@ function makeTrustTexture(): THREE.CanvasTexture {
   ctx.fillStyle = '#100c0c';
   ctx.fillRect(0, 0, w, h);
 
-  // Soft ambient warmth filling the whole plate — calm, safe.
+  // プレート全体を満たす柔らかな温かみ — 穏やかで安全な空気。
   const amb = ctx.createRadialGradient(w * 0.5, h * 0.44, 30, w * 0.5, h * 0.5, h * 0.8);
   amb.addColorStop(0, 'rgba(244,222,196,0.5)');
   amb.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = amb;
   ctx.fillRect(0, 0, w, h);
 
-  // A single quiet presence — a soft upright glow (a figure, half-turned).
+  // 静かな存在 — 柔らかく立ち上がる発光（半身を向けた人影）。
   const px = w * 0.5;
   const py = h * 0.5;
   const body = ctx.createRadialGradient(px, py, 6, px, py + 40, h * 0.34);
@@ -180,7 +184,7 @@ function makeTrustTexture(): THREE.CanvasTexture {
   body.addColorStop(0.5, 'rgba(206,158,116,0.28)');
   body.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = body;
-  // Slightly taller-than-wide to read as a presence, not a dot.
+  // 「点」ではなく「存在」に読ませるため、縦に少し長い楕円にする。
   ctx.save();
   ctx.translate(px, py);
   ctx.scale(0.72, 1.15);
@@ -189,7 +193,7 @@ function makeTrustTexture(): THREE.CanvasTexture {
   ctx.fill();
   ctx.restore();
 
-  // A soft head-light above the presence.
+  // 人影の上に柔らかな頭上の光。
   const head = ctx.createRadialGradient(px, py - h * 0.16, 2, px, py - h * 0.16, 60);
   head.addColorStop(0, 'rgba(255,240,218,0.6)');
   head.addColorStop(1, 'rgba(0,0,0,0)');
@@ -203,6 +207,7 @@ function makeTrustTexture(): THREE.CanvasTexture {
   return toTexture(canvas);
 }
 
+/** テーマに応じたプレースホルダーテクスチャを返す。 */
 export function makeExhibitTexture(theme: ExhibitTheme): THREE.CanvasTexture {
   switch (theme) {
     case 'toPlace':
@@ -217,7 +222,7 @@ export function makeExhibitTexture(theme: ExhibitTheme): THREE.CanvasTexture {
   }
 }
 
-/** Where each exhibit photograph lives. Drop the real images here. */
+/** 各展示写真の配置先。実写画像はここに置く。 */
 const EXHIBIT_SRC: Record<ExhibitTheme, string> = {
   toPlace: '/exhibits/to-place.webp',
   luzReal: '/exhibits/luz-real.webp',
@@ -230,13 +235,14 @@ const EXHIBIT_SRC: Record<ExhibitTheme, string> = {
 const exhibitLoader = new THREE.TextureLoader();
 
 /**
- * Load an exhibit's photograph as a hung "work".
+ * 展示の写真を「掛けられた作品」として読み込む。
  *
- * Returns a procedural placeholder immediately so the showroom never waits or
- * breaks. When the real photo (public/exhibits/<theme>.webp) finishes loading,
- * `onReady` fires with it; on error (no file yet) the placeholder simply stays.
- * The photo is kept calm — sRGB, anisotropic, never tone-bypassed — so it reads
- * as a framed print in a dim room, not a glowing screen.
+ * まずプロシージャルのプレースホルダーを即座に返すため、
+ * ショールームが待ち状態になったり壊れたりすることはない。
+ * 実写 (public/exhibits/<theme>.webp) の読み込みが完了すると onReady が
+ * 発火し、エラー時（ファイル未配置）はプレースホルダーがそのまま残る。
+ * 写真は sRGB + 異方性フィルタで落ち着いた色に保ち、「光る画面」ではなく
+ * 「薄暗い部屋の額装プリント」として読ませる。
  */
 export function loadExhibitTexture(
   theme: ExhibitTheme,
@@ -252,13 +258,13 @@ export function loadExhibitTexture(
     },
     undefined,
     () => {
-      /* No photograph in public/exhibits yet — keep the painted placeholder. */
+      /* public/exhibits に写真がまだない — 描画済みのプレースホルダーを使い続ける。 */
     },
   );
   return placeholder;
 }
 
-/** Soft round glow used for the few dust motes drifting in the light. */
+/** 光の粒・スポットライトに使う柔らかい丸発光のテクスチャ。 */
 export function makeGlowTexture(): THREE.CanvasTexture {
   const s = 128;
   const { canvas, ctx } = makeCanvas(s, s);

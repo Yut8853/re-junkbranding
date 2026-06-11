@@ -4,14 +4,16 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { Showroom } from './Showroom';
 
+/** 遷移進捗を、中央で最大になる山なりの強度カーブへ変換する。 */
 function transitionStrength(progress: number): number {
   return Math.pow(Math.sin(progress * Math.PI), 0.86);
 }
 
 /**
- * The Digital Showroom canvas — mounted once as a fixed, full-page background
- * that persists behind Hero, Meaning and Issue. A single ScrollTrigger maps
- * the whole page's scroll progress to the camera walking into the space.
+ * デジタルショールームのキャンバス。
+ * ページ全体の背後に固定フル画面で 1 度だけマウントされ、
+ * Hero / Meaning / Issue の背後に常駐する。ページ全体のスクロール進捗を
+ * 1 つの ScrollTrigger でカメラの「空間への歩み」に変換する。
  */
 export default function ShowroomCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,8 +43,8 @@ export default function ShowroomCanvas() {
     });
     triggers.push(trigger);
 
-    // Same generic boundary windows as the page script: one transition per
-    // adjacent pair of `.page > section`, anchored on content positions.
+    // ページスクリプト (gravityTransitions.ts) と同じ汎用の境界ウィンドウ:
+    // 隣り合う `.page > section` ペアごとに 1 つ、コンテンツ位置を基準に張る。
     const pageEl = document.querySelector<HTMLElement>('.page');
     const sections = pageEl
       ? Array.from(pageEl.querySelectorAll<HTMLElement>(':scope > section'))

@@ -1,0 +1,49 @@
+---
+/** 左上に固定表示するワードマーク。背後の WebGL シーンに馴染ませる。 */
+---
+
+<a class="site-logo" href="/" aria-label="JUNK BRANDING トップへ">
+  <span class="site-logo__main">JUNKBRANDING</span>
+</a>
+
+<style>
+  .site-logo {
+    position: fixed;
+    top: max(1.1rem, env(safe-area-inset-top));
+    left: max(1.4rem, env(safe-area-inset-left));
+    z-index: 20;
+    display: flex;
+    align-items: baseline;
+    gap: 0.55em;
+    font-family: var(--font-serif);
+    text-decoration: none;
+    color: var(--ink);
+    mix-blend-mode: difference;
+    transition: opacity 0.28s ease;
+  }
+
+  .site-logo:hover {
+    opacity: 0.72;
+  }
+
+  .site-logo:focus-visible {
+    outline: 2px solid rgba(210, 232, 255, 0.76);
+    outline-offset: 6px;
+  }
+
+  .site-logo__main {
+    font-size: 1.18rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    line-height: 1;
+  }
+
+  .site-logo__sub {
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.42em;
+    line-height: 1;
+    color: var(--warm);
+    opacity: 0.85;
+  }
+</style>
