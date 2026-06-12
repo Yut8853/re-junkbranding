@@ -21,8 +21,10 @@ const placements = [
 ];
 ---
 
-<section class="section scatter" data-transition-to="scatter" data-scatter-gallery data-gravity-bottom-only>
+<section class="section scatter" data-transition-to="scatter" data-scatter-gallery data-gravity-bottom-only aria-labelledby="scatter-title">
   <div class="scatter__inner">
+    <!-- スクリーンリーダー向けの見出し。ビジュアル自体は装飾なので aria-hidden。 -->
+    <h2 class="sr-only" id="scatter-title">制作イメージギャラリー</h2>
     <div class="scatter__stage" aria-hidden="true">
       {panels.map((panel, index) => (
         <img

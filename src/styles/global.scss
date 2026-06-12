@@ -65,6 +65,53 @@ main {
   display: block;
 }
 
+/* スキップリンクのターゲットにフォーカスが移ったときの不要なリングを消す */
+main:focus {
+  outline: none;
+}
+
+/* キーボード操作時の共通フォーカスリング（マウスクリックでは出ない） */
+:focus-visible {
+  outline: 2px solid rgba(210, 232, 255, 0.76);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* スクリーンリーダー専用テキスト: 視覚的には隠し、読み上げには残す */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* スキップリンク: 通常は画面外、フォーカスされたときだけ左上に現れる */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 100;
+  padding: 0.65em 1.4em;
+  transform: translate(-50%, -200%);
+  background: rgba(10, 22, 38, 0.92);
+  border: 1px solid rgba(210, 232, 255, 0.4);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus-visible {
+  transform: translate(-50%, 0);
+}
+
 ::selection {
   background: rgba(244, 220, 187, 0.22);
   color: #fff;
