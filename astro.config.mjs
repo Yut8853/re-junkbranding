@@ -14,5 +14,19 @@ export default defineConfig({
   vite: {
     // GLSL ファイルは `?raw` サフィックスでプレーン文字列として import する。
     assetsInclude: ['**/*.glsl'],
+    build: {
+      rollupOptions: {
+        output: {
+          // 重い 3D ランタイムをページ固有コードから分離し、キャッシュを効きやすくする。
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined;
+            if (id.includes('/three/')) return 'three';
+            if (id.includes('/gsap/')) return 'animation';
+            if (id.includes('/react/') || id.includes('/react-dom/')) return 'react';
+            return 'vendor';
+          },
+        },
+      },
+    },
   },
 });

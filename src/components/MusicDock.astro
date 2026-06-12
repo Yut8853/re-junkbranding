@@ -11,7 +11,7 @@
   type="button"
   aria-label="音楽を再生"
   aria-pressed="false"
-  title="Music"
+  aria-controls="ambient-music"
   data-music-toggle
 >
   <span class="music-toggle__halo" aria-hidden="true"></span>
@@ -52,12 +52,12 @@
 </button>
 
 <!-- role="status": 読み上げ環境にも「操作で音楽が流れる」ことを伝えるライブリージョン。 -->
-<p class="music-notice" role="status" data-music-notice>
+<p class="music-notice" role="status" aria-live="polite" data-music-notice>
   <span class="music-notice__dot" aria-hidden="true"></span>
   画面を操作すると音楽が流れます。<br>右下のボタンでON / OFFできます
 </p>
 
-<audio data-music-loop src="/noctiluca_night_sea_loop.wav" preload="none" loop></audio>
+<audio id="ambient-music" data-music-loop src="/noctiluca_night_sea_loop.wav" preload="none" loop aria-hidden="true"></audio>
 
 <style>
   .music-toggle {

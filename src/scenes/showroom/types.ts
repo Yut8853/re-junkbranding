@@ -49,14 +49,6 @@ export type CloudParams = {
   -readonly [K in keyof typeof CLOUDS]: number;
 };
 
-/** GUI の「Copy sky + sea JSON」で書き出すプリセット全体の形。 */
-export type CopyableShowroomPreset = {
-  sky: SkyParams;
-  clouds: CloudParams;
-  sea: WaterParams;
-  seaColors: WaterColorParams;
-};
-
 /** 夜光虫タイムライン（/public の JSON）の 1 イベント。 */
 export type NightSeaEvent = {
   /** ループ内の発火時刻（秒）。 */
@@ -168,22 +160,3 @@ export type ExhibitPlacement = {
   area: number;
 };
 
-/** createShowroomGui() に渡すオプション。 */
-export type ShowroomGuiOptions = {
-  /** GUI が直接書き換える空パラメータ。 */
-  skyParams: SkyParams;
-  /** GUI が直接書き換える雲パラメータ。 */
-  cloudParams: CloudParams;
-  /** GUI が直接書き換える海パラメータ。 */
-  waterParams: WaterParams;
-  /** GUI が直接書き換える海の配色。 */
-  waterColors: WaterColorParams;
-  /** 空パラメータ変更時にユニフォームへ反映するコールバック。 */
-  onSkyChange: () => void;
-  /** 雲パラメータ変更時のコールバック。 */
-  onCloudChange: () => void;
-  /** 海流の向き変更時のコールバック（正規化して反映）。 */
-  onFlowDirectionChange: () => void;
-  /** 海の配色変更時のコールバック。 */
-  onWaterColorsChange: () => void;
-};

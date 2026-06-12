@@ -21,6 +21,31 @@ const {
   ogImage = '/ogp.png',
 } = Astro.props;
 
+const siteName = 'JUNKBRANDING';
+const contactEmail = 'hello@junkbranding.com';
+const contactTelephone = '+81-80-9155-0526';
+const priceRange = '¥200,000〜';
+const ogImageAlt = 'JUNKBRANDING - 眺めるWebから、入り込むWebへ。';
+const address = {
+  '@type': 'PostalAddress',
+  addressCountry: 'JP',
+  addressRegion: '茨城県',
+  addressLocality: '稲敷郡美浦村',
+  streetAddress: 'みどり台767-43',
+};
+const serviceNames = [
+  'Webサイト制作',
+  'LP制作',
+  'CMS構築・更新しやすいサイト制作',
+  '体験型Web・演出サイト',
+  '既存サイトの改善',
+  'フロントエンド実装',
+  'SEO・解析まわり',
+  'Webデザイン・画像制作',
+  '紙媒体・営業ツール',
+  '小規模事業者向けサポート',
+];
+
 // astro.config.mjs の `site` を基準に絶対 URL を組み立てる。
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 const ogImageUrl = new URL(ogImage, Astro.site);
@@ -35,9 +60,11 @@ const structuredData = {
     {
       '@type': 'Organization',
       '@id': orgId,
-      name: 'JUNKBRANDING',
+      name: siteName,
       url: Astro.site?.href,
-      email: 'hello@junkbranding.com',
+      email: contactEmail,
+      telephone: contactTelephone,
+      address,
       logo: {
         '@type': 'ImageObject',
         url: new URL('/favicon.svg', Astro.site).href,
@@ -47,7 +74,7 @@ const structuredData = {
       '@type': 'WebSite',
       '@id': websiteId,
       url: Astro.site?.href,
-      name: 'JUNKBRANDING',
+      name: siteName,
       description,
       inLanguage: 'ja',
       publisher: { '@id': orgId },
@@ -63,33 +90,29 @@ const structuredData = {
       primaryImageOfPage: {
         '@type': 'ImageObject',
         url: ogImageUrl.href,
+        width: 1200,
+        height: 630,
+        caption: ogImageAlt,
       },
     },
     {
       '@type': 'ProfessionalService',
       '@id': new URL('/#service', Astro.site).href,
-      name: 'JUNKBRANDING',
+      name: siteName,
       url: Astro.site?.href,
       description,
-      email: 'hello@junkbranding.com',
+      email: contactEmail,
+      telephone: contactTelephone,
+      priceRange,
+      image: ogImageUrl.href,
+      address,
       areaServed: 'JP',
       parentOrganization: { '@id': orgId },
       // 提供サービスのカタログ（ServicesIndex のグループと対応）。
       hasOfferCatalog: {
         '@type': 'OfferCatalog',
         name: 'できること',
-        itemListElement: [
-          'Webサイト制作',
-          'LP制作',
-          'CMS構築・更新しやすいサイト制作',
-          '体験型Web・演出サイト',
-          '既存サイトの改善',
-          'フロントエンド実装',
-          'SEO・解析まわり',
-          'Webデザイン・画像制作',
-          '紙媒体・営業ツール',
-          '小規模事業者向けサポート',
-        ].map((name) => ({
+        itemListElement: serviceNames.map((name) => ({
           '@type': 'Offer',
           itemOffered: { '@type': 'Service', name },
         })),
@@ -104,6 +127,7 @@ const structuredData = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="format-detection" content="telephone=no" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl.href} />
@@ -113,11 +137,14 @@ const structuredData = {
 
     <!-- OGP: SNS・チャットアプリでの共有時の見え方。 -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="JUNKBRANDING" />
+    <meta property="og:site_name" content={siteName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl.href} />
     <meta property="og:image" content={ogImageUrl.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
     <meta property="og:locale" content="ja_JP" />
 
     <!-- Twitter (X) カード。 -->
@@ -125,6 +152,7 @@ const structuredData = {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl.href} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
 
     <!-- 構造化データ（JSON-LD）。 -->
     <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
