@@ -12,6 +12,11 @@ import FinalCta from '../components/FinalCta.astro';
 ---
 
 <Base>
+  <div class="page-loader" data-page-loader role="status" aria-live="polite" aria-label="読み込み中">
+    <div class="page-loader__mark" aria-hidden="true">JUNKBRANDING</div>
+    <div class="page-loader__bar" aria-hidden="true"><span></span></div>
+  </div>
+
   <!-- デジタルショールーム: ページ全体の背後に常駐する 1 つの 3D 空間。 -->
   <div class="showroom-bg" aria-hidden="true">
     <ShowroomCanvas client:load />
@@ -41,6 +46,68 @@ import FinalCta from '../components/FinalCta.astro';
   動作のロジックは src/scripts/* にある。
 -->
 <style is:global>
+  .page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    gap: 1.1rem;
+    align-content: center;
+    padding: var(--gutter);
+    background:
+      radial-gradient(circle at 50% 56%, rgba(255, 219, 162, 0.28), transparent 34%),
+      linear-gradient(180deg, rgba(15, 45, 76, 0.98), rgba(25, 65, 101, 0.94));
+    color: var(--warm);
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 0.55s ease,
+      visibility 0s linear 0s;
+  }
+
+  .page-loader.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.55s ease,
+      visibility 0s linear 0.55s;
+  }
+
+  .page-loader__mark {
+    font-family: var(--font-serif);
+    font-size: clamp(1.15rem, 3.4vw, 2.4rem);
+    font-weight: 700;
+    letter-spacing: 0;
+    text-shadow: 0 0 26px rgba(255, 219, 162, 0.26);
+  }
+
+  .page-loader__bar {
+    width: min(14rem, 48vw);
+    height: 1px;
+    overflow: hidden;
+    background: rgba(244, 220, 187, 0.22);
+  }
+
+  .page-loader__bar span {
+    display: block;
+    width: 42%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(244, 220, 187, 0.95), transparent);
+    animation: page-loader-bar 1.15s ease-in-out infinite;
+  }
+
+  @keyframes page-loader-bar {
+    from {
+      transform: translateX(-110%);
+    }
+
+    to {
+      transform: translateX(260%);
+    }
+  }
+
   .showroom-bg {
     position: fixed;
     inset: 0;
@@ -168,6 +235,16 @@ import FinalCta from '../components/FinalCta.astro';
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .page-loader,
+    .page-loader.is-hidden {
+      transition: none;
+    }
+
+    .page-loader__bar span {
+      animation: none;
+      width: 100%;
+    }
+
     [data-transition-from],
     [data-transition-to] {
       transform: none;
@@ -200,4 +277,10 @@ import FinalCta from '../components/FinalCta.astro';
   initMusic();
   initReveals(reduced);
   initGravityTransitions(reduced);
+
+  const loader = document.querySelector<HTMLElement>('[data-page-loader]');
+  const hideLoader = () => loader?.classList.add('is-hidden');
+
+  window.addEventListener('showroom:ready', hideLoader, { once: true });
+  window.setTimeout(hideLoader, reduced ? 900 : 5200);
 </script>

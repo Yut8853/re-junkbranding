@@ -104,6 +104,7 @@ export class Showroom {
   private gravityProgressTarget = 0;
   private gravityProgress = 0;
   private gravityDirection: 1 | -1 = 1;
+  private readyDispatched = false;
   private disposed = false;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -226,6 +227,13 @@ export class Showroom {
     this.renderer.autoClear = autoClear;
   }
 
+  /** 初回描画完了をページ側へ伝える。 */
+  private dispatchReady(): void {
+    if (this.readyDispatched) return;
+    this.readyDispatched = true;
+    window.dispatchEvent(new CustomEvent('showroom:ready'));
+  }
+
   /** フレームループ本体。入力のイージング → ユニフォーム更新 → 描画。 */
   private readonly frame = (): void => {
     this.raf = requestAnimationFrame(this.frame);
@@ -340,6 +348,8 @@ export class Showroom {
       this.renderSceneTarget(null);
       this.renderParticles();
     }
+
+    this.dispatchReady();
   };
 
   /** ループ開始。展示動画の再生も再試行する。 */

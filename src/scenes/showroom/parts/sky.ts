@@ -18,10 +18,10 @@ export function createSky(exposure: number, track: Track): Sky {
   track(sky.geometry);
   track(sky.material);
 
-  // 1) uniform 宣言の直後に uSkyExposure を追加
+  // 1) フラグメントシェーダーの uniform 宣言へ uSkyExposure を追加
   // 2) 最終出力行をフォト空チャンクへ丸ごと置換
   sky.material.fragmentShader = sky.material.fragmentShader
-    .replace('uniform vec3 sunPosition;', 'uniform vec3 sunPosition;\nuniform float uSkyExposure;')
+    .replace('uniform float mieDirectionalG;', 'uniform float mieDirectionalG;\nuniform float uSkyExposure;')
     .replace('gl_FragColor = vec4( retColor, 1.0 );', skyPhotoChunk);
   sky.material.uniforms.uSkyExposure = { value: exposure };
   sky.material.needsUpdate = true;
