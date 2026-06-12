@@ -67,7 +67,10 @@ export const initMusic = (): void => {
   };
 
   // 自動再生のきっかけとして拾う操作イベント。
-  const autoStartEvents = ['pointermove', 'pointerdown', 'keydown', 'touchstart', 'touchend', 'wheel', 'scroll'] as const;
+  const autoStartEvents = ['pointermove', 'pointerdown', 'click', 'keydown', 'touchstart', 'touchend', 'wheel', 'scroll'] as const;
+  // ブラウザが「ユーザー操作（gesture）」として認めるイベント。
+  // これらの発生中は音付き再生の許可が下りるため、クールダウンを無視して必ず試行する。
+  const gestureEvents = new Set(['pointerdown', 'click', 'keydown', 'touchend']);
   let autoStarted = false;
   let retryBlockedUntil = 0;
   const removeAutoStart = () => {
@@ -75,7 +78,10 @@ export const initMusic = (): void => {
   };
   const tryAutoStart = (event: Event) => {
     if (autoStarted) return;
-    if (performance.now() < retryBlockedUntil) return;
+    // ジェスチャーイベント、または既にページのどこかを操作済み（再生許可が出る見込みがある）
+    // の場合はクールダウンを無視して即試行する。
+    const likelyAllowed = gestureEvents.has(event.type) || (navigator.userActivation?.hasBeenActive ?? false);
+    if (!likelyAllowed && performance.now() < retryBlockedUntil) return;
     // トグルボタン上の操作は click ハンドラーに任せるため無視する。
     if (event.target instanceof Node && musicToggle.contains(event.target)) return;
     autoStarted = true;
