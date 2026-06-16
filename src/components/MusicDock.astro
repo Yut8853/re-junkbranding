@@ -6,50 +6,53 @@
  */
 ---
 
-<button
-  class="music-toggle"
-  type="button"
-  aria-label="音楽を再生"
-  aria-pressed="false"
-  aria-controls="ambient-music"
-  data-music-toggle
->
-  <span class="music-toggle__halo" aria-hidden="true"></span>
-  <svg class="music-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      class="music-toggle__speaker"
-      d="M4.75 9.25h3.7l4.8-3.75v13l-4.8-3.75h-3.7z"
-      fill="none"
-      stroke="currentColor"
-      stroke-linejoin="round"
-      stroke-width="1.7"
-    />
-    <path
-      class="music-toggle__wave music-toggle__wave--inner"
-      d="M16 9.1c.82.78 1.23 1.74 1.23 2.9s-.41 2.12-1.23 2.9"
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-width="1.7"
-    />
-    <path
-      class="music-toggle__wave music-toggle__wave--outer"
-      d="M18.45 6.9c1.36 1.37 2.04 3.06 2.04 5.1s-.68 3.73-2.04 5.1"
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-width="1.7"
-    />
-    <path
-      class="music-toggle__slash"
-      d="M5.2 4.8 19 19.2"
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-width="1.8"
-    />
-  </svg>
-</button>
+<div class="music-dock" data-music-dock>
+  <button
+    class="music-toggle"
+    type="button"
+    aria-label="音楽を再生"
+    aria-pressed="false"
+    aria-controls="ambient-music"
+    data-music-toggle
+  >
+    <span class="music-toggle__halo" aria-hidden="true"></span>
+    <svg class="music-toggle__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        class="music-toggle__speaker"
+        d="M4.75 9.25h3.7l4.8-3.75v13l-4.8-3.75h-3.7z"
+        fill="none"
+        stroke="currentColor"
+        stroke-linejoin="round"
+        stroke-width="1.7"
+      />
+      <path
+        class="music-toggle__wave music-toggle__wave--inner"
+        d="M16 9.1c.82.78 1.23 1.74 1.23 2.9s-.41 2.12-1.23 2.9"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-width="1.7"
+      />
+      <path
+        class="music-toggle__wave music-toggle__wave--outer"
+        d="M18.45 6.9c1.36 1.37 2.04 3.06 2.04 5.1s-.68 3.73-2.04 5.1"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-width="1.7"
+      />
+      <path
+        class="music-toggle__slash"
+        d="M5.2 4.8 19 19.2"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-width="1.8"
+      />
+    </svg>
+  </button>
+
+</div>
 
 <!-- role="status": 読み上げ環境にも「操作で音楽が流れる」ことを伝えるライブリージョン。 -->
 <p class="music-notice" role="status" aria-live="polite" data-music-notice>
@@ -60,11 +63,18 @@
 <audio id="ambient-music" data-music-loop src="/noctiluca_night_sea_loop.wav" preload="none" loop aria-hidden="true"></audio>
 
 <style>
-  .music-toggle {
+  .music-dock {
     position: fixed;
     right: max(1rem, env(safe-area-inset-right));
     bottom: max(1rem, env(safe-area-inset-bottom));
     z-index: 20;
+    display: grid;
+    justify-items: end;
+    gap: 0.55rem;
+  }
+
+  .music-toggle {
+    position: relative;
     display: grid;
     place-items: center;
     width: 3.25rem;

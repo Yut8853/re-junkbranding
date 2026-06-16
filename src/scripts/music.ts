@@ -9,9 +9,13 @@ import { clamp01, smoothstep } from './utils';
  * 音量の変化は常にフェード（420ms）を通す。
  */
 export const initMusic = (): void => {
-  const musicToggle = document.querySelector<HTMLButtonElement>('[data-music-toggle]');
-  const musicLoop = document.querySelector<HTMLAudioElement>('[data-music-loop]');
+  const musicToggle = document.querySelector<HTMLButtonElement>(
+    '[data-music-toggle]'
+  );
+  const musicLoop =
+    document.querySelector<HTMLAudioElement>('[data-music-loop]');
   if (!musicToggle || !musicLoop) return;
+  const musicDock = document.querySelector<HTMLElement>('[data-music-dock]');
 
   let fadeFrame = 0;
   /** 現在音量から target へ smoothstep カーブでフェードする。 */
@@ -46,18 +50,23 @@ export const initMusic = (): void => {
   musicLoop.volume = 0;
   setMusicState(false);
 
-  const musicNotice = document.querySelector<HTMLElement>('[data-music-notice]');
+  const musicNotice = document.querySelector<HTMLElement>(
+    '[data-music-notice]'
+  );
   const hideMusicNotice = () => musicNotice?.classList.add('is-hidden');
 
   /** 再生開始（フェードイン）。ブラウザにブロックされたら onBlocked へ。 */
   const startMusic = (onBlocked?: () => void) => {
     setMusicState(true);
     fadeVolume(0.42);
-    void musicLoop.play().then(hideMusicNotice).catch(() => {
-      setMusicState(false);
-      fadeVolume(0);
-      onBlocked?.();
-    });
+    void musicLoop
+      .play()
+      .then(hideMusicNotice)
+      .catch(() => {
+        setMusicState(false);
+        fadeVolume(0);
+        onBlocked?.();
+      });
   };
 
   /** フェードアウトしてから pause する停止処理。 */
@@ -67,23 +76,47 @@ export const initMusic = (): void => {
   };
 
   // 自動再生のきっかけとして拾う操作イベント。
-  const autoStartEvents = ['pointermove', 'pointerdown', 'click', 'keydown', 'touchstart', 'touchend', 'wheel', 'scroll'] as const;
+  const autoStartEvents = [
+    'pointermove',
+    'pointerdown',
+    'click',
+    'keydown',
+    'touchstart',
+    'touchend',
+    'wheel',
+    'scroll',
+  ] as const;
   // ブラウザが「ユーザー操作（gesture）」として認めるイベント。
   // これらの発生中は音付き再生の許可が下りるため、クールダウンを無視して必ず試行する。
-  const gestureEvents = new Set(['pointerdown', 'click', 'keydown', 'touchend']);
+  const gestureEvents = new Set([
+    'pointerdown',
+    'click',
+    'keydown',
+    'touchend',
+  ]);
   let autoStarted = false;
   let retryBlockedUntil = 0;
   const removeAutoStart = () => {
-    for (const type of autoStartEvents) window.removeEventListener(type, tryAutoStart);
+    for (const type of autoStartEvents)
+      window.removeEventListener(type, tryAutoStart);
   };
   const tryAutoStart = (event: Event) => {
     if (autoStarted) return;
     // ジェスチャーイベント、または既にページのどこかを操作済み（再生許可が出る見込みがある）
     // の場合はクールダウンを無視して即試行する。
-    const likelyAllowed = gestureEvents.has(event.type) || (navigator.userActivation?.hasBeenActive ?? false);
+    const likelyAllowed =
+      gestureEvents.has(event.type) ||
+      (navigator.userActivation?.hasBeenActive ?? false);
     if (!likelyAllowed && performance.now() < retryBlockedUntil) return;
-    // トグルボタン上の操作は click ハンドラーに任せるため無視する。
-    if (event.target instanceof Node && musicToggle.contains(event.target)) return;
+    // UIコントロール上の操作は各ボタンの役割に任せるため無視する。
+    if (
+      event.target instanceof Node &&
+      ((event.target instanceof Element &&
+        event.target.closest('[data-music-autostart-ignore]')) ||
+        (musicDock?.contains(event.target) ??
+          musicToggle.contains(event.target)))
+    )
+      return;
     autoStarted = true;
     removeAutoStart();
     startMusic(() => {
