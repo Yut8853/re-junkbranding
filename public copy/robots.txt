@@ -1,0 +1,6 @@
+# すべてのクローラーにサイト全体のクロールを許可する。
+User-agent: *
+Allow: /
+
+# サイトマップの場所（@astrojs/sitemap がビルド時に生成する）。
+Sitemap: https://junkbranding.com/sitemap-index.xml

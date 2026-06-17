@@ -24,6 +24,7 @@ import { createGravityField, updateGravityPlane } from './parts/gravityField';
 import { createCompositePass } from './parts/compositePass';
 import { createMotes, updateMotes } from './parts/motes';
 import { buildExhibits, playExhibitVideo } from './parts/exhibits';
+import type { ExhibitTarget } from './types';
 
 // ShowroomCanvas が import するため、ここから型を再エクスポートする。
 export type { GravityInput } from './types';
@@ -89,6 +90,18 @@ export class Showroom {
   private readonly nightSea = new NightSea();
   /** 展示の動画要素。start/stop/dispose で再生制御する。 */
   private readonly exhibitVideos: HTMLVideoElement[];
+  /** ホバー / クリック判定に使う展示プレートの対象一覧。 */
+  private readonly exhibitTargets: ExhibitTarget[];
+  /** レイキャスト用。setPointer() の生値からレイを飛ばす。 */
+  private readonly raycaster = new THREE.Raycaster();
+  /** レイキャスト用 NDC（Three.js は上が +1 なので Y を反転して使う）。 */
+  private readonly ndc = new THREE.Vector2();
+  /** 現在ホバー中の展示（なければ null）。 */
+  private hoveredTarget: ExhibitTarget | null = null;
+  /** 各展示のホバー強度（theme をキーに 0..1 をイージングで保持）。 */
+  private readonly hoverAmount = new Map<ExhibitTarget, number>();
+  /** ポインタがウィンドウ内にあるか（外れたらホバー解除）。 */
+  private pointerInside = false;
   /** dispose() で一括破棄するリソースの台帳。 */
   private readonly disposables: Array<THREE.BufferGeometry | THREE.Material | THREE.Texture> = [];
 
@@ -143,7 +156,10 @@ export class Showroom {
     this.floorRig = createFloor(this.waterParams, this.waterColors, this.camPos, this.sunDir, track);
     this.scene.add(this.floorRig.mesh);
 
-    this.exhibitVideos = buildExhibits(this.scene, track);
+    const exhibits = buildExhibits(this.scene, track);
+    this.exhibitVideos = exhibits.videos;
+    this.exhibitTargets = exhibits.targets;
+    for (const target of this.exhibitTargets) this.hoverAmount.set(target, 0);
 
     this.gravityRig = createGravityField(track);
     this.scene.add(this.gravityRig.plane);
@@ -179,6 +195,20 @@ export class Showroom {
   /** 正規化ポインタ位置（-1..1）を受け取る。実際の追従は frame() のイージング。 */
   setPointer(x: number, y: number): void {
     this.pointerTarget.set(x, y);
+    this.pointerInside = true;
+  }
+
+  /** ポインタがウィンドウから外れたときに呼ぶ。ホバーを解除する。 */
+  clearPointer(): void {
+    this.pointerInside = false;
+  }
+
+  /**
+   * 現在ホバー中の展示の遷移先 URL を返す（なければ null）。
+   * ページ側の click ハンドラから呼び、同一タブ遷移に使う。
+   */
+  getHoveredHref(): string | null {
+    return this.hoveredTarget?.href ?? null;
   }
 
   /** ページ全体のスクロール進捗。0 = 入口、1 = ギャラリー最奥。 */
@@ -234,6 +264,42 @@ export class Showroom {
     window.dispatchEvent(new CustomEvent('showroom:ready'));
   }
 
+  /**
+   * 展示プレートへのレイキャストでホバー対象を更新し、
+   * 各プレートの uHover をイージングで滑らかに駆動する。
+   * reduced 時はカーソル追従を切るため常に非ホバー扱い。
+   */
+  private updateHover(t: number): void {
+    let hit: ExhibitTarget | null = null;
+    if (this.pointerInside && !this.reduced) {
+      // pointerTarget は視差用に「上が -1」。Three.js の NDC は「上が +1」
+      // なので Y を反転してレイを飛ばす（これがズレの主因だった）。
+      this.ndc.set(this.pointerTarget.x, -this.pointerTarget.y);
+      this.raycaster.setFromCamera(this.ndc, this.camera);
+      let nearest = Infinity;
+      for (const target of this.exhibitTargets) {
+        const intersects = this.raycaster.intersectObject(target.mesh, false);
+        if (intersects.length && intersects[0].distance < nearest) {
+          nearest = intersects[0].distance;
+          hit = target;
+        }
+      }
+    }
+    this.hoveredTarget = hit;
+    // ホバー中はリンクであることを示すポインタカーソルにする。
+    document.body.style.cursor = hit ? 'pointer' : '';
+
+    // 各プレートのホバー強度を追従させ、uHover / uTime を更新する。
+    for (const target of this.exhibitTargets) {
+      const current = this.hoverAmount.get(target) ?? 0;
+      const goal = target === hit ? 1 : 0;
+      const next = current + (goal - current) * 0.18;
+      this.hoverAmount.set(target, next);
+      target.material.uniforms.uHover.value = next;
+      target.material.uniforms.uTime.value = t;
+    }
+  }
+
   /** フレームループ本体。入力のイージング → ユニフォーム更新 → 描画。 */
   private readonly frame = (): void => {
     this.raf = requestAnimationFrame(this.frame);
@@ -265,6 +331,10 @@ export class Showroom {
     this.camera.position.z += (targetZ - this.camera.position.z) * 0.06;
     this.camera.lookAt(px * 0.7, 1.4 + py * 0.3, FAR_Z);
     this.camPos.copy(this.camera.position);
+
+    // 展示プレートのホバー判定（カメラ確定後にレイを飛ばす）。
+    this.camera.updateMatrixWorld();
+    this.updateHover(t);
 
     // 露出: Hero では全開、Meaning で落ち着き、Issue でさらに沈めて
     // 文字を強く読ませる。重力中はわずかに絞り、波パルスで微かに揺れる。
@@ -372,6 +442,7 @@ export class Showroom {
   dispose(): void {
     this.disposed = true;
     this.stop();
+    document.body.style.cursor = '';
     window.removeEventListener('resize', this.resize);
     for (const video of this.exhibitVideos) {
       video.removeAttribute('src');

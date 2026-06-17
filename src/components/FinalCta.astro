@@ -53,6 +53,23 @@
     margin-inline: auto;
   }
 
+  /* コピーの裏に、境界がふわっとぼけた暗だまりを敷いて白文字を読みやすくする。 */
+  .final-cta__inner::before {
+    content: '';
+    position: absolute;
+    inset: -12% -14%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      60% 50% at 50% 48%,
+      rgba(6, 7, 11, 0.6) 0%,
+      rgba(6, 7, 11, 0.4) 44%,
+      rgba(6, 7, 11, 0.16) 72%,
+      transparent 100%
+    );
+    filter: blur(18px);
+  }
+
   .final-cta__label {
     margin: 0 0 clamp(1.2rem, 3vw, 2rem);
     font-size: 0.72rem;

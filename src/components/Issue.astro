@@ -26,6 +26,23 @@
     overflow: hidden;
   }
 
+  /* コピーの裏に、境界がふわっとぼけた暗だまりを敷いて白文字を読みやすくする。 */
+  .issue::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      58% 40% at 50% 50%,
+      rgba(6, 7, 11, 0.6) 0%,
+      rgba(6, 7, 11, 0.4) 44%,
+      rgba(6, 7, 11, 0.16) 72%,
+      transparent 100%
+    );
+    filter: blur(16px);
+  }
+
   .issue__inner {
     position: relative;
     z-index: 1;

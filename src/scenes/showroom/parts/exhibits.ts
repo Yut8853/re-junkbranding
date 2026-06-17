@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import exhibitVert from '../shaders/exhibit.vert.glsl?raw';
 import exhibitFrag from '../shaders/exhibit.frag.glsl?raw';
-import { EXHIBIT_SCALE, EXHIBIT_VIDEO_SRC, FULL_HD_ASPECT } from '../constants';
+import { EXHIBIT_LINK_HREF, EXHIBIT_SCALE, EXHIBIT_VIDEO_SRC, FULL_HD_ASPECT } from '../constants';
 import { makeExhibitTexture, makeGlowTexture, type ExhibitTheme } from '../textures';
-import type { ExhibitPlacement, Track } from '../types';
+import type { ExhibitPlacement, ExhibitTarget, Track } from '../types';
 
 /**
  * 展示の配置リスト。サイトの動画 6 本を 1 点ずつ、
@@ -91,6 +91,8 @@ function makePlateMaterial(
         uFrameSize: { value: new THREE.Vector2(size[0], size[1]) },
         uTint: { value: new THREE.Color(0xcfd0d6) }, // わずかに沈めた色調
         uImageScroll: { value: 0 },
+        uHover: { value: 0 }, // ホバー強度 0..1（Showroom 側でイージング）
+        uTime: { value: 0 },  // グリッチ駆動用の経過時間
       },
     }),
   );
@@ -120,14 +122,14 @@ function makePlateMaterial(
 
 /**
  * 展示 1 点（マット + 作品プレート + スポットライト）を組み立てて
- * シーンへ追加する。
+ * シーンへ追加し、ホバー判定に使う対象（プレート + マテリアル + href）を返す。
  */
 function buildExhibit(
   scene: THREE.Scene,
   placement: ExhibitPlacement,
   videos: HTMLVideoElement[],
   track: Track,
-): void {
+): ExhibitTarget {
   const { theme, pos, facing } = placement;
   const size = fullHdFrameSize(placement.area);
   const group = new THREE.Group();
@@ -167,14 +169,22 @@ function buildExhibit(
   // 通路へ向け、入口側へわずかに角度をつけて「迎える」姿勢にする。
   group.rotation.y = facing * Math.PI * 0.5 - facing * 0.14;
   scene.add(group);
+
+  return { theme, mesh: plate, material: plateMat, href: EXHIBIT_LINK_HREF[theme] };
 }
 
 /**
- * すべての展示を組み立ててシーンへ追加し、
- * 再生制御用に動画要素の配列を返す（start/stop/dispose で使う）。
+ * すべての展示を組み立ててシーンへ追加し、再生制御用の動画要素配列と
+ * ホバー / クリック判定用の対象配列を返す。
  */
-export function buildExhibits(scene: THREE.Scene, track: Track): HTMLVideoElement[] {
+export function buildExhibits(
+  scene: THREE.Scene,
+  track: Track,
+): { videos: HTMLVideoElement[]; targets: ExhibitTarget[] } {
   const videos: HTMLVideoElement[] = [];
-  for (const placement of PLACEMENTS) buildExhibit(scene, placement, videos, track);
-  return videos;
+  const targets: ExhibitTarget[] = [];
+  for (const placement of PLACEMENTS) {
+    targets.push(buildExhibit(scene, placement, videos, track));
+  }
+  return { videos, targets };
 }

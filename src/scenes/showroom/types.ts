@@ -160,3 +160,19 @@ export type ExhibitPlacement = {
   area: number;
 };
 
+/**
+ * ホバー / クリック判定に使う展示 1 点の対象。
+ * Raycaster で mesh を当て、material の uHover を駆動し、
+ * クリック時に href へ同一タブ遷移する。
+ */
+export type ExhibitTarget = {
+  /** 作品（動画）の識別子。 */
+  theme: ExhibitTheme;
+  /** レイキャスト対象となる作品プレートのメッシュ。 */
+  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  /** uHover / uTime を持つプレートのシェーダーマテリアル。 */
+  material: THREE.ShaderMaterial;
+  /** クリック時の遷移先 URL。 */
+  href: string;
+};
+

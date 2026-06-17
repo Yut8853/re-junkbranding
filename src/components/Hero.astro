@@ -42,7 +42,15 @@
     inset: 0;
     z-index: 1;
     pointer-events: none;
-
+    /* コピーの裏にだけ、境界がふわっとぼけた暗だまりを敷いて白文字を読みやすくする。 */
+    background: radial-gradient(
+      62% 52% at 50% 46%,
+      rgba(6, 7, 11, 0.62) 0%,
+      rgba(6, 7, 11, 0.42) 42%,
+      rgba(6, 7, 11, 0.18) 70%,
+      transparent 100%
+    );
+    filter: blur(14px);
   }
 
   .hero__inner {

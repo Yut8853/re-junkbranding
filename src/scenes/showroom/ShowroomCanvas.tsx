@@ -32,6 +32,25 @@ export default function ShowroomCanvas() {
     };
     window.addEventListener('pointermove', onPointer, { passive: true });
 
+    // ポインタがウィンドウの外へ本当に出たときだけホバーを解除する。
+    // （pointerout は要素間の移動でも発火するため relatedTarget で判定する）
+    const onPointerLeave = (e: PointerEvent) => {
+      if (!e.relatedTarget) scene.clearPointer();
+    };
+    const onBlur = () => scene.clearPointer();
+    window.addEventListener('pointerout', onPointerLeave, { passive: true });
+    window.addEventListener('blur', onBlur);
+
+    // 展示プレートをホバー中にクリックしたら、同一タブでリンク先へ遷移する。
+    // ただし実際のリンク / ボタンなど操作要素が重なっている場合はそちらを優先する。
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('a, button, input, textarea, select, [role="button"]')) return;
+      const href = scene.getHoveredHref();
+      if (href) window.location.href = href;
+    };
+    window.addEventListener('click', onClick);
+
     gsap.registerPlugin(ScrollTrigger);
     const triggers: ScrollTrigger[] = [];
     const trigger = ScrollTrigger.create({
@@ -78,6 +97,9 @@ export default function ShowroomCanvas() {
 
     return () => {
       window.removeEventListener('pointermove', onPointer);
+      window.removeEventListener('pointerout', onPointerLeave);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('click', onClick);
       triggers.forEach((item) => item.kill());
       scene.dispose();
     };

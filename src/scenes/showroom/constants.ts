@@ -82,6 +82,16 @@ export const EXHIBIT_VIDEO_SRC: Record<ExhibitTheme, string> = {
   next: '/next.mp4',
 };
 
+/** 展示作品ごとのクリック遷移先 URL（同一タブで遷移）。 */
+export const EXHIBIT_LINK_HREF: Record<ExhibitTheme, string> = {
+  toPlace: 'https://to-place.co.jp/',
+  luzReal: 'https://luz-real.com/',
+  transB: 'https://trans-b.vercel.app/',
+  iwakiki: 'https://d2crmzpw5das9r.cloudfront.net/',
+  junk: 'https://funky.junkbranding.com/',
+  next: 'https://next-inc.group/',
+};
+
 /** 展示フレームのアスペクト比（フル HD の 16:9 で統一）。 */
 export const FULL_HD_ASPECT = 16 / 9;
 
