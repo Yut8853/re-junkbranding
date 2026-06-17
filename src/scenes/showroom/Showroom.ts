@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 import type { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-
 import { BG, FAR_Z, GRAVITY_EFFECT, SKY, CLOUDS } from './constants';
 import type {
   CloudParams,
@@ -86,8 +84,6 @@ export class Showroom {
   /** 2 回描画の間でカメラ姿勢を退避するバッファ。 */
   private readonly savedCameraPosition = new THREE.Vector3();
   private readonly savedCameraQuaternion = new THREE.Quaternion();
-  /** 開発用の海GUI。 */
-  private gui: GUI | null = null;
 
   /** 夜光虫イベントタイムラインの再生器。 */
   private readonly nightSea = new NightSea();
@@ -173,35 +169,9 @@ export class Showroom {
     this.particleScene.add(this.motesRig.points);
 
     this.nightSea.load('/noctiluca_night_sea_events.json');
-    this.setupGui();
 
     this.resize();
     window.addEventListener('resize', this.resize);
-  }
-
-  /** 海パラメータを実行時に触るデバッグGUI。 */
-  private setupGui(): void {
-    this.gui = new GUI({ title: 'Ocean Controls', width: 320 });
-
-    const waterFolder = this.gui.addFolder('Water');
-    waterFolder.add(this.waterParams, 'distortionScale', 0, 8, 0.01).name('distortionScale');
-    waterFolder.add(this.waterParams, 'size', 0.1, 10, 0.01).name('size');
-    waterFolder.add(this.waterParams, 'normalSpeed', 0.05, 2, 0.01).name('normalSpeed');
-    waterFolder.add(this.waterParams, 'alpha', 0.55, 1, 0.01).name('alpha');
-    waterFolder.add(this.waterParams, 'wavePulseBoost', 0, 4, 0.01).name('wavePulseBoost');
-    waterFolder.add(this.waterParams, 'sunColorIntensity', 0, 3, 0.01).name('sunColorIntensity')
-      .onChange(() => applyWaterColors(this.floorRig.material, this.waterColors, this.waterParams));
-    waterFolder.open();
-
-    const colorFolder = this.gui.addFolder('Color');
-    colorFolder.addColor(this.waterColors, 'water').name('waterColor')
-      .onChange(() => applyWaterColors(this.floorRig.material, this.waterColors, this.waterParams));
-    colorFolder.addColor(this.waterColors, 'sun').name('sunColor')
-      .onChange(() => applyWaterColors(this.floorRig.material, this.waterColors, this.waterParams));
-
-    const cameraFolder = this.gui.addFolder('Camera');
-    cameraFolder.add(this.waterParams, 'parallaxStrength', 0, 1.2, 0.01).name('parallax');
-    cameraFolder.add(this.waterParams, 'cameraForwardAmount', 0, 1.4, 0.01).name('forwardAmount');
   }
 
   /** 破棄対象を台帳へ登録してそのまま返す。parts/* の生成関数に渡す。 */
@@ -484,8 +454,6 @@ export class Showroom {
     for (const d of this.disposables) d.dispose();
     this.sceneTargetA.dispose();
     this.sceneTargetB.dispose();
-    this.gui?.destroy();
-    this.gui = null;
     this.renderer.dispose();
   }
 }
