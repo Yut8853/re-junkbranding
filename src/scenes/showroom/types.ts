@@ -1,4 +1,5 @@
 import type * as THREE from 'three';
+import type { Water } from 'three/examples/jsm/objects/Water.js';
 import { WATER_PRESET } from './presets/waterPreset';
 import { SKY, CLOUDS } from './constants';
 import type { ExhibitTheme } from './textures';
@@ -29,14 +30,10 @@ export type WaterParams = {
 
 /** 海の配色パラメータ（GUI のカラーピッカーで編集する）。 */
 export type WaterColorParams = {
-  /** 最も深い水の色。 */
-  base: string;
-  /** 光を受けた浅い水の色。 */
-  shallow: string;
-  /** 波頭のハイライト色。 */
-  crest: string;
-  /** 海全体の明るさ係数。 */
-  brightness: number;
+  /** Water.js の waterColor。 */
+  water: string;
+  /** Water.js の sunColor。 */
+  sun: string;
 };
 
 /** 空（three.js Sky）の実行時パラメータ。constants.ts の SKY が初期値。 */
@@ -94,9 +91,9 @@ export type CloudsRig = {
 
 /** 海面のリグ。 */
 export type FloorRig = {
-  /** X軸 -90° 回転で水平に敷いた海プレーン。 */
-  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
-  /** 波・反射・露出のユニフォームを持つマテリアル。 */
+  /** three.js examples の Water メッシュ。 */
+  mesh: Water;
+  /** Water.js のシェーダーマテリアル。 */
   material: THREE.ShaderMaterial;
 };
 
