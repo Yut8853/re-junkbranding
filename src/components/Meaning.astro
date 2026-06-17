@@ -26,28 +26,29 @@
     overflow: hidden;
   }
 
-  /* コピーの裏に、境界がふわっとぼけた暗だまりを敷いて白文字を読みやすくする。 */
-  .meaning::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      58% 40% at 50% 50%,
-      rgba(6, 7, 11, 0.6) 0%,
-      rgba(6, 7, 11, 0.4) 44%,
-      rgba(6, 7, 11, 0.16) 72%,
-      transparent 100%
-    );
-    filter: blur(16px);
-  }
-
   .meaning__inner {
     position: relative;
     z-index: 1;
     max-width: none;
     padding-inline: var(--gutter);
+  }
+
+  /* コピーの裏にだけ、境界がふわっとぼけた暗だまりを敷いて白文字を読みやすくする。
+     テキストブロック自体を基準にするので、必ず文字の真後ろに来る。 */
+  .meaning__inner::before {
+    content: '';
+    position: absolute;
+    inset: -60% -10%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      60% 50% at 50% 50%,
+      rgba(6, 7, 11, 0.6) 0%,
+      rgba(6, 7, 11, 0.34) 42%,
+      rgba(6, 7, 11, 0.1) 68%,
+      transparent 84%
+    );
+    filter: blur(16px);
   }
 
   .meaning__label {

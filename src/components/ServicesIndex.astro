@@ -190,6 +190,24 @@ const serviceGroups = [
     margin-inline: auto;
   }
 
+  /* コピーの裏にだけ、境界がふわっとぼけた暗だまりを敷いて白文字を読みやすくする。
+     テキストブロック自体を基準にするので、必ず文字の真後ろに来る。 */
+  .services__inner::before {
+    content: '';
+    position: absolute;
+    inset: -8% -6%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      60% 50% at 50% 50%,
+      rgba(6, 7, 11, 0.6) 0%,
+      rgba(6, 7, 11, 0.34) 42%,
+      rgba(6, 7, 11, 0.1) 68%,
+      transparent 84%
+    );
+    filter: blur(16px);
+  }
+
   .services__head {
     display: grid;
     grid-template-columns: minmax(10rem, 0.34fr) 1fr;
