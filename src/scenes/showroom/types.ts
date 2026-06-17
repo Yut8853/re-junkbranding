@@ -89,6 +89,22 @@ export type CloudsRig = {
   material: THREE.ShaderMaterial;
 };
 
+/** 頭上の雲（真上を向いたとき見える雲の天井）のリグ。 */
+export type SkyCloudsRig = {
+  /** カメラ上空に水平に置いた雲プレーン。 */
+  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  /** uTime / uWave などを毎フレーム更新するマテリアル。 */
+  material: THREE.ShaderMaterial;
+};
+
+/** 地平線のシルエット（右=山 / 左=町）のリグ。 */
+export type HorizonRig = {
+  /** 遠景に立てたシルエットのプレーン。 */
+  mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
+  /** uTime（窓の明滅）を更新するマテリアル。 */
+  material: THREE.ShaderMaterial;
+};
+
 /** 海面のリグ。 */
 export type FloorRig = {
   /** three.js examples の Water メッシュ。 */
@@ -125,6 +141,12 @@ export type MotesRig = {
   speeds: number[];
   /** 各粒子の位相シード（動きをばらけさせる乱数）。 */
   seeds: number[];
+  /** 最終セクションでの画面充填アンカー（スクリーン X, -1..1）。 */
+  anchorX: number[];
+  /** 最終セクションでの画面充填アンカー（スクリーン Y, -1..1）。 */
+  anchorY: number[];
+  /** 充填時にカメラから粒子を置く距離。 */
+  fillDepth: number[];
 };
 
 /** updateMotes() に毎フレーム渡すコンテキスト。 */
@@ -143,6 +165,8 @@ export type MotesFrameContext = {
   sparklePulse: number;
   /** prefers-reduced-motion が有効か。有効ならカーソル磁石を無効化。 */
   reduced: boolean;
+  /** スクロール進捗（イージング済み 0..1）。最終セクションの画面充填に使う。 */
+  s: number;
 };
 
 /** 展示 1 点の配置定義（parts/exhibits.ts の PLACEMENTS で使用）。 */

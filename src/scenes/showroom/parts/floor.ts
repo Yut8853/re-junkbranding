@@ -3,8 +3,8 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import type { FloorRig, Track, WaterColorParams, WaterParams } from '../types';
 
 /** 海プレーンのワールドサイズ。layoutFloorForViewport の計算で参照する。 */
-const SEA_WIDTH = 48;
-const SEA_LENGTH = 120;
+const SEA_WIDTH = 96;
+const SEA_LENGTH = 240;
 
 /**
  * 海面（three.js Water.js）を生成する。

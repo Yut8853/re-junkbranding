@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Sky } from 'three/examples/jsm/objects/Sky.js';
-import { BG, FAR_Z, GRAVITY_EFFECT, SKY, CLOUDS } from './constants';
+import { BG, GRAVITY_EFFECT, SKY, CLOUDS, CAMERA_PATH, SKY_CLOUDS } from './constants';
 import type {
   CloudParams,
   CloudsRig,
@@ -8,7 +8,9 @@ import type {
   FloorRig,
   GravityFieldRig,
   GravityInput,
+  HorizonRig,
   MotesRig,
+  SkyCloudsRig,
   SkyParams,
   WaterColorParams,
   WaterParams,
@@ -18,6 +20,7 @@ import { cloneWaterPreset, cloneWaterColors } from './presets/waterPreset';
 import { NightSea } from './nightSea';
 import { createSky, applySkyParams } from './parts/sky';
 import { createClouds } from './parts/clouds';
+import { createSkyClouds, createMountains } from './parts/scenery';
 import { applyWaterColors, createFloor, layoutFloorForViewport } from './parts/floor';
 import { createGravityField, updateGravityPlane } from './parts/gravityField';
 import { createCompositePass } from './parts/compositePass';
@@ -65,12 +68,20 @@ export class Showroom {
 
   /** 海のユニフォーム uCamPos と共有するカメラ位置。 */
   private readonly camPos = new THREE.Vector3();
+  /** カメラ航路サンプリング用の作業ベクトル（毎フレーム再利用）。 */
+  private readonly pathEye = new THREE.Vector3();
+  private readonly pathLook = new THREE.Vector3();
+  private readonly lookTarget = new THREE.Vector3();
   /** 空と海で共有する太陽方向ベクトル。 */
   private readonly sunDir = new THREE.Vector3(0, 0.04, -1);
 
   // ---- シーンパーツ（生成は parts/*、保持と毎フレーム更新はここ） ----
   private readonly sky: Sky;
   private readonly cloudsRig: CloudsRig;
+  /** 頭上の雲（真上を向いたとき見える雲の天井）。 */
+  private readonly skyCloudsRig: SkyCloudsRig;
+  /** 右の地平線の山並み。 */
+  private readonly mountainsRig: HorizonRig;
   private readonly floorRig: FloorRig;
   private readonly gravityRig: GravityFieldRig;
   private readonly compositeRig: CompositePassRig;
@@ -152,6 +163,12 @@ export class Showroom {
     this.cloudsRig = createClouds(this.cloudParams, track);
     this.scene.add(this.cloudsRig.mesh);
 
+    // 真上を向くと見える頭上の雲と、右の山並み。
+    this.skyCloudsRig = createSkyClouds(track);
+    this.scene.add(this.skyCloudsRig.mesh);
+    this.mountainsRig = createMountains(track);
+    this.scene.add(this.mountainsRig.mesh);
+
     this.floorRig = createFloor(this.waterParams, this.waterColors, this.sunDir, track);
     this.scene.add(this.floorRig.mesh);
 
@@ -204,7 +221,7 @@ export class Showroom {
 
   /**
    * 現在ホバー中の展示の遷移先 URL を返す（なければ null）。
-   * ページ側の click ハンドラから呼び、同一タブ遷移に使う。
+   * ページ側��� click ハンドラから呼び、同一タブ遷移に使う。
    */
   getHoveredHref(): string | null {
     return this.hoveredTarget?.href ?? null;
@@ -299,6 +316,33 @@ export class Showroom {
     }
   }
 
+  /**
+   * スクロール進捗 0..1 を CAMERA_PATH 上の eye/look へ変換する。
+   *
+   * 進捗をキーフレーム区間に等分し、区間内は smoothstep で滑らかに
+   * 補間する。これにより各セクションの境目で姿勢がカクつかず、
+   * 空を見上げる→右へ振る→左へ振る→海を真上から覗く、という
+   * 連続したカメラワークになる。結果は pathEye / pathLook に書き込む。
+   */
+  private sampleCameraPath(s: number): void {
+    const segments = CAMERA_PATH.length - 1;
+    const scaled = clamp01(s) * segments;
+    const i = Math.min(Math.floor(scaled), segments - 1);
+    const local = smoothstep(0, 1, scaled - i);
+    const a = CAMERA_PATH[i];
+    const b = CAMERA_PATH[i + 1];
+    this.pathEye.set(
+      lerp(a.eye[0], b.eye[0], local),
+      lerp(a.eye[1], b.eye[1], local),
+      lerp(a.eye[2], b.eye[2], local),
+    );
+    this.pathLook.set(
+      lerp(a.look[0], b.look[0], local),
+      lerp(a.look[1], b.look[1], local),
+      lerp(a.look[2], b.look[2], local),
+    );
+  }
+
   /** フレームループ本体。入力のイージング → ユニフォーム更新 → 描画。 */
   private readonly frame = (): void => {
     this.raf = requestAnimationFrame(this.frame);
@@ -322,14 +366,25 @@ export class Showroom {
     const gravityPeak = Math.pow(Math.sin(this.gravityProgress * Math.PI), 0.64);
     const gravityStretch = this.gravity * gravityPeak;
 
-    // ショールームへ歩み入る: スクロールでカメラをドリーし、展示の脇を抜ける。
-    const forward = this.waterParams.cameraForwardAmount;
-    const targetZ = lerp(9, 9 + (-27 * forward), s) - gravityStretch * GRAVITY_EFFECT.cameraPull;
-    const targetY = lerp(1.7, 1.45, s) + gravityStretch * GRAVITY_EFFECT.cameraLift;
-    this.camera.position.x += (px * 1.1 * this.waterParams.parallaxStrength - this.camera.position.x) * 0.06;
-    this.camera.position.y += (targetY - py * 0.5 * this.waterParams.parallaxStrength - this.camera.position.y) * 0.06;
+    // ショールームを抜けるカメラワーク: スクロールで CAMERA_PATH をたどり、
+    // 空を見上げ・左右へ振れ・最後は海を真上から覗き込む縦横��尽の動きにする。
+    // 重力エフェクトはこの航路の上に「引き込み」として重ねる。
+    this.sampleCameraPath(s);
+    const parallax = this.waterParams.parallaxStrength;
+    // 航路の eye に重力の引き込みとポインタ視差を加える。
+    const targetX = this.pathEye.x + px * 1.1 * parallax;
+    const targetY = this.pathEye.y + gravityStretch * GRAVITY_EFFECT.cameraLift - py * 0.5 * parallax;
+    const targetZ = this.pathEye.z - gravityStretch * GRAVITY_EFFECT.cameraPull;
+    this.camera.position.x += (targetX - this.camera.position.x) * 0.06;
+    this.camera.position.y += (targetY - this.camera.position.y) * 0.06;
     this.camera.position.z += (targetZ - this.camera.position.z) * 0.06;
-    this.camera.lookAt(px * 0.7, 1.4 + py * 0.3, FAR_Z);
+    // 注視点も航路の look へ追従させ、ポインタでわずかに揺らす。
+    this.lookTarget.set(
+      this.pathLook.x + px * 0.7,
+      this.pathLook.y + py * 0.3,
+      this.pathLook.z,
+    );
+    this.camera.lookAt(this.lookTarget);
     this.camPos.copy(this.camera.position);
 
     // 展示プレートのホバー判定（カメラ確定後にレイを飛ばす）。
@@ -337,7 +392,7 @@ export class Showroom {
     this.updateHover(t);
 
     // 露出: Hero では全開、Meaning で落ち着き、Issue でさらに沈めて
-    // 文字を強く読ませる。重力中はわずかに絞り、波パルスで微かに揺れる。
+    // 文字を強く読ませる。重力中はわ��かに絞り、波パルスで微かに揺れる。
     const exposure = (1 - 0.55 * smoothstep(0.3, 1, s))
       * (1 - gravityStretch * GRAVITY_EFFECT.exposureDip)
       + wavePulse * 0.09;
@@ -352,6 +407,15 @@ export class Showroom {
     floorMat.uniforms.sunDirection.value.copy(this.sunDir).normalize();
     applyWaterColors(floorMat, this.waterColors, this.waterParams);
     this.cloudsRig.material.uniforms.uTime.value = t;
+    // 頭上の雲: 海のうねりと連動させつつ、カメラ上空に追従させて
+    // 真上を向いたとき常に視界を覆うようにする。
+    this.skyCloudsRig.material.uniforms.uTime.value = t;
+    this.skyCloudsRig.material.uniforms.uWave.value = wavePulse;
+    this.skyCloudsRig.mesh.position.x = this.camera.position.x;
+    this.skyCloudsRig.mesh.position.z = this.camera.position.z;
+    this.skyCloudsRig.mesh.position.y = this.camera.position.y + SKY_CLOUDS.height;
+    // 地平線の山並みの陰影を時間で揺らす。
+    this.mountainsRig.material.uniforms.uTime.value = t;
     this.sky.material.uniforms.uSkyExposure.value = exposure;
 
     // ---- 重力フィールドのユニフォーム更新（reduced 時はすべて 0） ----
@@ -374,6 +438,7 @@ export class Showroom {
       gravityStretch,
       sparklePulse,
       reduced: this.reduced,
+      s,
     });
 
     // ---- 描画: 重力中は 2 パス合成、それ以外は直接描画 ----
@@ -385,7 +450,8 @@ export class Showroom {
       // 1 枚目: カメラを下げて前へ出した「引き込まれる側」のフレーム。
       this.camera.position.y -= compositeStrength * 0.22;
       this.camera.position.z += compositeStrength * 0.86;
-      this.camera.lookAt(px * 0.58, 1.34 + py * 0.22, FAR_Z);
+      this.lookTarget.set(this.pathLook.x + px * 0.58, this.pathLook.y + py * 0.22, this.pathLook.z);
+      this.camera.lookAt(this.lookTarget);
       this.renderSceneTarget(this.sceneTargetA);
 
       // 2 枚目: カメラを上げて後ろへ引いた「残る側」のフレーム。
@@ -393,7 +459,8 @@ export class Showroom {
       this.camera.quaternion.copy(this.savedCameraQuaternion);
       this.camera.position.y += compositeStrength * 0.18;
       this.camera.position.z -= compositeStrength * 0.58;
-      this.camera.lookAt(px * 0.78, 1.46 + py * 0.36, FAR_Z);
+      this.lookTarget.set(this.pathLook.x + px * 0.78, this.pathLook.y + py * 0.36, this.pathLook.z);
+      this.camera.lookAt(this.lookTarget);
       this.renderSceneTarget(this.sceneTargetB);
 
       // カメラを元に戻して合成パスを画面へ。

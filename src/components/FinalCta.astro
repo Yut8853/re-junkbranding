@@ -20,6 +20,26 @@
         <path d="m13 6 6 6-6 6" />
       </svg>
     </a>
+
+    <footer class="final-cta__footer" data-reveal data-reveal-delay="0.24">
+      <dl class="final-cta__contact">
+        <div class="final-cta__row">
+          <dt>Tel</dt>
+          <dd><a href="tel:08091550426">080-9155-0426</a></dd>
+        </div>
+        <div class="final-cta__row">
+          <dt>Mail</dt>
+          <dd><a href="mailto:hello@junkbranding.com">hello@junkbranding.com</a></dd>
+        </div>
+        <div class="final-cta__row final-cta__row--address">
+          <dt>Address</dt>
+          <dd>
+            <span class="final-cta__zip">〒300-0410</span>
+            <span>茨城県稲敷郡美浦村<br />みどり台767-43</span>
+          </dd>
+        </div>
+      </dl>
+    </footer>
   </div>
 </section>
 
@@ -149,6 +169,84 @@
     transform: translateX(0.22rem);
   }
 
+  /* CTA の下に置く連絡先フッター。区切り線で本文と分け、控えめなトーンでまとめる。 */
+  .final-cta__footer {
+    position: relative;
+    margin-top: clamp(2.6rem, 6vw, 4.4rem);
+    padding-top: clamp(1.8rem, 4vw, 2.8rem);
+    border-top: 1px solid rgba(188, 239, 255, 0.18);
+  }
+
+  /* 背後の 3D パネルに連絡先が溶けないよう、ふわっとした暗だまりを敷く。 */
+  .final-cta__footer::before {
+    content: '';
+    position: absolute;
+    inset: -8% -10% -16%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      60% 70% at 50% 46%,
+      rgba(6, 7, 11, 0.62) 0%,
+      rgba(6, 7, 11, 0.36) 50%,
+      transparent 82%
+    );
+    filter: blur(14px);
+  }
+
+  .final-cta__contact {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(1.2rem, 3vw, 2.2rem) clamp(1.8rem, 4vw, 3rem);
+    max-width: 40rem;
+    margin-inline: auto;
+  }
+
+  .final-cta__row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .final-cta__row dt {
+    font-size: 0.64rem;
+    line-height: 1;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: rgba(188, 239, 255, 0.72);
+  }
+
+  .final-cta__row dd {
+    margin: 0;
+    font-size: clamp(0.95rem, 1.3vw, 1.12rem);
+    line-height: 1.7;
+    color: rgba(226, 233, 244, 0.9);
+  }
+
+  .final-cta__row dd a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.24s ease;
+  }
+
+  .final-cta__row dd a:hover {
+    color: #fff;
+  }
+
+  .final-cta__row--address dd {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .final-cta__zip {
+    font-size: 0.85em;
+    letter-spacing: 0.08em;
+    color: rgba(226, 233, 244, 0.7);
+  }
+
   @media (max-width: 640px) {
     .final-cta::before {
       inset: 22% 0;
@@ -156,6 +254,10 @@
 
     .final-cta__lead br {
       display: none;
+    }
+
+    .final-cta__contact {
+      flex-direction: column;
     }
   }
 

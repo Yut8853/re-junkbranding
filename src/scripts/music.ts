@@ -147,4 +147,29 @@ export const initMusic = (): void => {
 
     stopMusic();
   });
+
+  // 別タブ・別ウィンドウを見ている間は音楽を止め、戻ってきたら再開する。
+  // resumeOnVisible は「非表示にする直前に鳴っていたか」を覚えておくフラグ。
+  let resumeOnVisible = false;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      // 鳴っている場合だけ覚えて即停止する。
+      // 注意: 非表示タブでは requestAnimationFrame が停止するため、
+      // フェード（stopMusic）に頼ると pause() が呼ばれず鳴りっぱなしになる。
+      // ここではフェードを使わず直接 pause する。
+      resumeOnVisible =
+        musicToggle.classList.contains('is-on') && !musicLoop.paused;
+      if (resumeOnVisible) {
+        cancelAnimationFrame(fadeFrame);
+        musicLoop.pause();
+        musicLoop.volume = 0;
+      }
+      return;
+    }
+    // タブに戻った: 離脱前に鳴っていたときだけ再開する。
+    if (resumeOnVisible) {
+      resumeOnVisible = false;
+      startMusic();
+    }
+  });
 };
