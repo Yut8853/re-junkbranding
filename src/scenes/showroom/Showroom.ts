@@ -327,26 +327,30 @@ export class Showroom {
     const cube = this.cubeMesh;
     if (!cube || !this.cubeActive) return;
 
-    const duration = 2.2;
+    const duration = 2.6;
     const p = clamp01((t - this.cubeStartTime) / duration);
-    // easeInOutCubic: 中央へ運ぶ移動量。
-    const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
-    // 回転は前半 0〜0.62 で 2 回転して正面に収束させる。
-    const spinP = clamp01(p / 0.62);
-    const spinE = 1 - Math.pow(1 - spinP, 3); // easeOutCubic
-    // 変形(板化)は後半 0.62〜1.0 で進める。
-    const mRaw = clamp01((p - 0.62) / 0.38);
+
+    // 移動＆立方体化は前半 0〜0.42 で完了させ、中央でしっかり立方体に。
+    const formRaw = clamp01(p / 0.42);
+    const form = formRaw < 0.5
+      ? 4 * formRaw * formRaw * formRaw
+      : 1 - Math.pow(-2 * formRaw + 2, 3) / 2; // easeInOutCubic
+    // 変形(板化)は終盤 0.82〜1.0 まで待ってから一気に行う。
+    const mRaw = clamp01((p - 0.82) / 0.18);
     const morph = mRaw * mRaw * (3 - 2 * mRaw); // smoothstep
+    // 回転は 0〜0.82（立方体でいる間ずっと）で 3 回転し正面に収束。
+    const spinP = clamp01(p / 0.82);
+    const spinE = 1 - Math.pow(1 - spinP, 3); // easeOutCubic
 
     // カメラ前方の中央へ運ぶ。
     this.camera.getWorldDirection(this.tmpDir);
     this.tmpCenter.copy(this.camera.position).addScaledVector(this.tmpDir, 6.4);
-    cube.position.lerpVectors(this.cubeFrom, this.tmpCenter, e);
+    cube.position.lerpVectors(this.cubeFrom, this.tmpCenter, form);
 
     // 平らな板 → 正立方体（厚みのある cube）。
-    const cubeX = lerp(this.cubeStartScale.x, this.cubeSide, e);
-    const cubeY = lerp(this.cubeStartScale.y, this.cubeSide, e);
-    const cubeZ = lerp(this.cubeStartScale.z, this.cubeSide, e);
+    const cubeX = lerp(this.cubeStartScale.x, this.cubeSide, form);
+    const cubeY = lerp(this.cubeStartScale.y, this.cubeSide, form);
+    const cubeZ = lerp(this.cubeStartScale.z, this.cubeSide, form);
     // モーダルに合わせた 16:9 の薄い板（最終形）。
     const plateW = this.cubeSide * 1.55;
     const plateH = plateW * (9 / 16);
@@ -357,20 +361,20 @@ export class Showroom {
       lerp(cubeZ, plateZ, morph),
     );
 
-    // クルクル回転（2 回転）。spinE が 1 で正面（4π ≡ 0）に収束。
-    const rotY = spinE * Math.PI * 4;
-    const rotX = Math.sin(spinE * Math.PI) * 0.6; // 途中で傾き、最後は 0 に戻る
+    // クルクル回転（2 回転）。spinE が 1 ���正面（4π ≡ 0）に収束。
+    const rotY = spinE * Math.PI * 6;
+    const rotX = Math.sin(spinE * Math.PI) * 0.5; // 途中で傾き、最後は 0 に戻る
     cube.rotation.set(rotX, rotY, 0);
 
     // 板化が始まったらモーダルを開き、キューブをフェードアウトして受け渡す。
-    if (morph > 0.45 && !this.cubeOpened) {
+    if (morph > 0.4 && !this.cubeOpened) {
       this.cubeOpened = true;
       if (this.activeTheme && this.activeHref) {
         this.dispatchExhibitOpen(this.activeTheme, this.activeHref);
       }
     }
     if (this.cubeOpened) {
-      const fade = clamp01((morph - 0.45) / 0.5);
+      const fade = clamp01((morph - 0.4) / 0.55);
       cube.material.opacity = 1 - fade;
     }
 
