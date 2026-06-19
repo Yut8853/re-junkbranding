@@ -79,6 +79,13 @@ export default function ShowroomCanvas() {
     };
     window.addEventListener('showroom:exhibit-open', onExhibitOpen);
 
+    // CTA ボタンのホバーで、背後の粒子をボタンの青へ染める。
+    const onCtaHover = (e: Event) => {
+      const detail = (e as CustomEvent<{ on: boolean }>).detail;
+      scene.setCtaTint(Boolean(detail?.on));
+    };
+    window.addEventListener('showroom:cta-hover', onCtaHover);
+
     gsap.registerPlugin(ScrollTrigger);
     const triggers: ScrollTrigger[] = [];
     const trigger = ScrollTrigger.create({
@@ -129,6 +136,7 @@ export default function ShowroomCanvas() {
       window.removeEventListener('blur', onBlur);
       window.removeEventListener('click', onClick);
       window.removeEventListener('showroom:exhibit-open', onExhibitOpen);
+      window.removeEventListener('showroom:cta-hover', onCtaHover);
       triggers.forEach((item) => item.kill());
       scene.dispose();
     };

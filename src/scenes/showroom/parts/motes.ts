@@ -31,14 +31,21 @@ const FRAG = /* glsl */ `
   uniform sampler2D uMap;
   uniform float uOpacity;
   uniform float uWhiten;
+  uniform vec3 uTint;
+  uniform float uTintAmount;
   varying vec3 vColor;
   void main() {
     vec4 tex = texture2D(uMap, gl_PointCoord);
     // uWhiten=1 で粒の色を白へ寄せる（最終セクション専用）。
     vec3 col = mix(vColor, vec3(1.0), uWhiten);
+    // uTintAmount=1 で粒を CTA ボタンの青へ寄せる（ホバー中）。
+    col = mix(col, uTint, uTintAmount);
     gl_FragColor = vec4(col, 1.0) * tex * uOpacity;
   }
 `;
+
+/** CTA ホバー時に粒子が寄っていくボタン由来の青（発光向けに明るめ）。 */
+const CTA_TINT_COLOR = 0x8fbcff;
 
 /**
  * 部屋を漂う光の粒（モート）を生成する。
@@ -108,6 +115,8 @@ export function createMotes(track: Track): MotesRig {
         uOpacity: { value: 0.94 },
         uSizeScale: { value: 1 },
         uWhiten: { value: 0 },
+        uTint: { value: new THREE.Color(CTA_TINT_COLOR) },
+        uTintAmount: { value: 0 },
         uPixelRatio: { value: Math.min(window.devicePixelRatio || 1, 2) },
       },
       vertexShader: VERT,
@@ -141,7 +150,7 @@ const rayDir = new THREE.Vector3();
  *              スクリーン全体のアンカーへ移し、画面いっぱいに散らす。
  */
 export function updateMotes(rig: MotesRig, ctx: MotesFrameContext): void {
-  const { t, camera, px, py, gravityStretch, sparklePulse, reduced, s } = ctx;
+  const { t, camera, px, py, gravityStretch, sparklePulse, reduced, s, ctaTint } = ctx;
   const halfW = window.innerWidth * 0.5;
   const halfH = window.innerHeight * 0.5;
   const attr = (rig.points.geometry as THREE.BufferGeometry).getAttribute('position') as THREE.BufferAttribute;
@@ -235,4 +244,6 @@ export function updateMotes(rig: MotesRig, ctx: MotesFrameContext): void {
   uniforms.uSizeScale.value = 1 + sparklePulse * 0.5 + gravityStretch * 0.3;
   // 最終セクションでのみ粒をカラフル → 白へ寄せる（道中はカラフルのまま）。
   uniforms.uWhiten.value = fill;
+  // CTA ホバー中は粒をボタンの青へ、離れたら元の色へ滑らかに戻す。
+  uniforms.uTintAmount.value += (ctaTint - uniforms.uTintAmount.value) * 0.08;
 }

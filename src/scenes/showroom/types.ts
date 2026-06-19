@@ -167,6 +167,8 @@ export type MotesFrameContext = {
   reduced: boolean;
   /** スクロール進捗（イージング済み 0..1）。最終セクションの画面充填に使う。 */
   s: number;
+  /** CTA ボタンのホバー目標値（1 = ボタンの青へ寄せる / 0 = 元の色）。 */
+  ctaTint: number;
 };
 
 /** 展示 1 点の配置定義（parts/exhibits.ts の PLACEMENTS で使用）。 */

@@ -43,6 +43,20 @@
   </div>
 </section>
 
+<script>
+  // CTA ボタンのホバー / フォーカスを 3D シーンへ伝え、
+  // 背後の粒子をボタンの色（青）へ染める。
+  const button = document.querySelector<HTMLElement>('.final-cta__button');
+  if (button) {
+    const emit = (on: boolean) =>
+      window.dispatchEvent(new CustomEvent('showroom:cta-hover', { detail: { on } }));
+    button.addEventListener('pointerenter', () => emit(true));
+    button.addEventListener('pointerleave', () => emit(false));
+    button.addEventListener('focus', () => emit(true));
+    button.addEventListener('blur', () => emit(false));
+  }
+</script>
+
 <style lang="scss">
   .final-cta {
     position: relative;
@@ -153,23 +167,6 @@
       box-shadow 0.32s ease;
   }
 
-  /* ホバー時に左から右へ流れる光のスイープ。 */
-  .final-cta__button::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      100deg,
-      transparent 12%,
-      rgba(235, 244, 255, 0.2) 48%,
-      transparent 84%
-    );
-    transform: translateX(-120%);
-    transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
-  }
-
   .final-cta__button span {
     position: relative;
     z-index: 1;
@@ -195,10 +192,6 @@
     box-shadow:
       0 1.2rem 2.8rem rgba(35, 83, 128, 0.34),
       inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-
-  .final-cta__button:hover::before {
-    transform: translateX(120%);
   }
 
   .final-cta__button:hover svg {
@@ -304,7 +297,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .final-cta__button,
-    .final-cta__button::before,
     .final-cta__button svg {
       transition: none;
     }

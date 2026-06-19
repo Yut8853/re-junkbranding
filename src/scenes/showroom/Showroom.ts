@@ -154,6 +154,8 @@ export class Showroom {
   private gravityDirection: 1 | -1 = 1;
   private readyDispatched = false;
   private disposed = false;
+  /** CTA ボタンのホバー目標値（1 = 粒子をボタンの青へ寄せる）。 */
+  private ctaTintTarget = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -411,6 +413,11 @@ export class Showroom {
     this.gravityDirection = input.direction;
   }
 
+  /** CTA ボタンのホバー状態を受け取り、粒子の色をボタンの青へ寄せる。 */
+  setCtaTint(on: boolean): void {
+    this.ctaTintTarget = on ? 1 : 0;
+  }
+
   /** リサイズ: レンダラー・ターゲット・カメラ・海レイアウトを更新する。 */
   private readonly resize = (): void => {
     const w = window.innerWidth;
@@ -613,6 +620,7 @@ export class Showroom {
       sparklePulse,
       reduced: this.reduced,
       s,
+      ctaTint: this.ctaTintTarget,
     });
 
     // ---- 描画: 重力中は 2 パス合成、それ以外は直接描画 ----
