@@ -155,7 +155,7 @@ export const EXHIBIT_VIDEO_SRC: Record<ExhibitTheme, string> = {
   next: '/next.mp4',
 };
 
-/** 展示作品ごとのクリック遷移先 URL（同一タブで遷移）。 */
+/** 展示作品ごとのクリック遷移先 URL（モーダルの「サイトを見る」で新規タブ）。 */
 export const EXHIBIT_LINK_HREF: Record<ExhibitTheme, string> = {
   toPlace: 'https://to-place.co.jp/',
   luzReal: 'https://luz-real.com/',
@@ -163,6 +163,16 @@ export const EXHIBIT_LINK_HREF: Record<ExhibitTheme, string> = {
   iwakiki: 'https://d2crmzpw5das9r.cloudfront.net/',
   junk: 'https://funky.junkbranding.com/',
   next: 'https://next-inc.group/',
+};
+
+/** 展示作品ごとの表示ラベル（モーダルのタイトル）。 */
+export const EXHIBIT_LABEL: Record<ExhibitTheme, string> = {
+  toPlace: 'to-place',
+  luzReal: 'LUZ REAL',
+  transB: 'trans-b',
+  iwakiki: 'IWAKIKI',
+  junk: 'FUNKY',
+  next: 'NEXT inc.',
 };
 
 /** 展示フレームのアスペクト比（フル HD の 16:9 で統一）。 */

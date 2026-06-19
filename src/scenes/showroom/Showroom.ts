@@ -27,6 +27,7 @@ import { createCompositePass } from './parts/compositePass';
 import { createMotes, updateMotes } from './parts/motes';
 import { buildExhibits, playExhibitVideo } from './parts/exhibits';
 import type { ExhibitTarget } from './types';
+import type { ExhibitTheme } from './textures';
 
 // ShowroomCanvas が import するため、ここから型を再エクスポートする。
 export type { GravityInput } from './types';
@@ -114,6 +115,30 @@ export class Showroom {
   private pointerInside = false;
   /** dispose() で一括破棄するリソースの台帳。 */
   private readonly disposables: Array<THREE.BufferGeometry | THREE.Material | THREE.Texture> = [];
+
+  // ---- 展示キューブ遷移（クリックで正立方体になり中央でクルクル回転 → モーダル） ----
+  /** 遷移中のキューブ（なければ null）。 */
+  private cubeMesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial> | null = null;
+  /** キューブ遷移中フラグ。 */
+  private cubeActive = false;
+  /** モーダルを開くイベントを 1 度だけ送るためのフラグ。 */
+  private cubeOpened = false;
+  /** 遷移開始時刻（clock.elapsedTime）。 */
+  private cubeStartTime = 0;
+  /** 正立方体になったときの一辺の長さ。 */
+  private cubeSide = 1;
+  /** 遷移開始位置（クリックした展示プレートのワールド座標）。 */
+  private readonly cubeFrom = new THREE.Vector3();
+  /** 遷移開始時のスケール（プレート相当の薄い板）。 */
+  private readonly cubeStartScale = new THREE.Vector3();
+  /** フレーム内で使い回す作業ベクトル。 */
+  private readonly tmpDir = new THREE.Vector3();
+  private readonly tmpCenter = new THREE.Vector3();
+  /** 遷移中の展示の識別子と遷移先 URL。 */
+  private activeTheme: ExhibitTheme | null = null;
+  private activeHref: string | null = null;
+  /** 遷移中に非表示にしている元の展示プレート。 */
+  private cubeSourceMesh: THREE.Object3D | null = null;
 
   // ---- 実行時パラメータ（初期値はプリセット） ----
   private readonly skyParams: SkyParams = { ...SKY };
@@ -225,6 +250,149 @@ export class Showroom {
    */
   getHoveredHref(): string | null {
     return this.hoveredTarget?.href ?? null;
+  }
+
+  /**
+   * 現在ホバー中の展示をクリックしたときに呼ぶ。
+   * その展示を正立方体に変えて中央へ運び、回転させてからモーダルを開く。
+   * reduced 時は演出を省略してすぐモーダルを開く。ホバー対象がなければ false。
+   */
+  activateExhibit(): boolean {
+    if (this.cubeActive) return false;
+    const target = this.hoveredTarget;
+    if (!target) return false;
+    if (this.reduced) {
+      this.dispatchExhibitOpen(target.theme, target.href);
+      return true;
+    }
+    this.startCube(target);
+    return true;
+  }
+
+  /** モーダルを開くカスタムイベントをページ側（React）へ送る。 */
+  private dispatchExhibitOpen(theme: ExhibitTheme, href: string): void {
+    window.dispatchEvent(
+      new CustomEvent('showroom:exhibit-open', { detail: { theme, href } }),
+    );
+  }
+
+  /** クリックされた展示プレートからキューブ遷移を開始する。 */
+  private startCube(target: ExhibitTarget): void {
+    const tex = target.material.uniforms.uMap.value as THREE.Texture;
+    const { width, height } = target.mesh.geometry.parameters;
+
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({
+      map: tex,
+      toneMapped: false,
+      fog: false,
+      transparent: true,
+    });
+    const cube = new THREE.Mesh(geometry, material);
+
+    // 開始は「ほぼ平らな板」をプレート位置・サイズで配置する。
+    // ※ getWorldPosition はグループを隠す前に取得する（行列が確定済み）。
+    target.mesh.getWorldPosition(this.cubeFrom);
+    cube.position.copy(this.cubeFrom);
+    this.cubeStartScale.set(width, height, Math.min(width, height) * 0.04);
+    cube.scale.copy(this.cubeStartScale);
+    this.scene.add(cube);
+
+    // 元の展示（動画プレート・四角い台座フレーム・スポットライトを含む
+    // グループ全体）を遷移中だけ隠す（キューブと二重に見えないように）。
+    const sourceGroup = target.mesh.parent ?? target.mesh;
+    this.cubeSourceMesh = sourceGroup;
+    sourceGroup.visible = false;
+
+    // 正立方体の一辺は元プレートの短辺に合わせ、少し小さめに。
+    this.cubeSide = Math.min(width, height) * 0.86;
+    this.cubeMesh = cube;
+    this.cubeActive = true;
+    this.cubeOpened = false;
+    this.cubeStartTime = this.clock.elapsedTime;
+    this.activeTheme = target.theme;
+    this.activeHref = target.href;
+    // クリック直後はホバーカーソルを戻す。
+    this.hoveredTarget = null;
+    document.body.style.cursor = '';
+  }
+
+  /**
+   * キューブ遷移を毎フレーム進める。
+   * 1) プレート → 正立方体になりながら中央へ移動・回転（クルクル）
+   * 2) 中央到達後は回転を正面で止め、16:9 の薄い板へ滑らかに変形
+   * 3) 板にモーダルを重ねてフェード（クロスフェード）してから片付け
+   */
+  private updateCube(t: number): void {
+    const cube = this.cubeMesh;
+    if (!cube || !this.cubeActive) return;
+
+    const duration = 2.2;
+    const p = clamp01((t - this.cubeStartTime) / duration);
+    // easeInOutCubic: 中央へ運ぶ移動量。
+    const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    // 回転は前半 0〜0.62 で 2 回転して正面に収束させる。
+    const spinP = clamp01(p / 0.62);
+    const spinE = 1 - Math.pow(1 - spinP, 3); // easeOutCubic
+    // 変形(板化)は後半 0.62〜1.0 で進める。
+    const mRaw = clamp01((p - 0.62) / 0.38);
+    const morph = mRaw * mRaw * (3 - 2 * mRaw); // smoothstep
+
+    // カメラ前方の中央へ運ぶ。
+    this.camera.getWorldDirection(this.tmpDir);
+    this.tmpCenter.copy(this.camera.position).addScaledVector(this.tmpDir, 6.4);
+    cube.position.lerpVectors(this.cubeFrom, this.tmpCenter, e);
+
+    // 平らな板 → 正立方体（厚みのある cube）。
+    const cubeX = lerp(this.cubeStartScale.x, this.cubeSide, e);
+    const cubeY = lerp(this.cubeStartScale.y, this.cubeSide, e);
+    const cubeZ = lerp(this.cubeStartScale.z, this.cubeSide, e);
+    // モーダルに合わせた 16:9 の薄い板（最終形）。
+    const plateW = this.cubeSide * 1.55;
+    const plateH = plateW * (9 / 16);
+    const plateZ = this.cubeSide * 0.015;
+    cube.scale.set(
+      lerp(cubeX, plateW, morph),
+      lerp(cubeY, plateH, morph),
+      lerp(cubeZ, plateZ, morph),
+    );
+
+    // クルクル回転（2 回転）。spinE が 1 で正面（4π ≡ 0）に収束。
+    const rotY = spinE * Math.PI * 4;
+    const rotX = Math.sin(spinE * Math.PI) * 0.6; // 途中で傾き、最後は 0 に戻る
+    cube.rotation.set(rotX, rotY, 0);
+
+    // 板化が始まったらモーダルを開き、キューブをフェードアウトして受け渡す。
+    if (morph > 0.45 && !this.cubeOpened) {
+      this.cubeOpened = true;
+      if (this.activeTheme && this.activeHref) {
+        this.dispatchExhibitOpen(this.activeTheme, this.activeHref);
+      }
+    }
+    if (this.cubeOpened) {
+      const fade = clamp01((morph - 0.45) / 0.5);
+      cube.material.opacity = 1 - fade;
+    }
+
+    if (p >= 1) {
+      this.finishCube();
+    }
+  }
+
+  /** キューブを片付けて遷移状態をリセットする。 */
+  private finishCube(): void {
+    if (this.cubeMesh) {
+      this.scene.remove(this.cubeMesh);
+      this.cubeMesh.geometry.dispose();
+      this.cubeMesh.material.dispose();
+      this.cubeMesh = null;
+    }
+    // 隠していた元の展示プレートを元に戻す。
+    if (this.cubeSourceMesh) {
+      this.cubeSourceMesh.visible = true;
+      this.cubeSourceMesh = null;
+    }
+    this.cubeActive = false;
   }
 
   /** ページ全体のスクロール進捗。0 = 入口、1 = ギャラリー最奥。 */
@@ -390,6 +558,8 @@ export class Showroom {
     // 展示プレートのホバー判定（カメラ確定後にレイを飛ばす）。
     this.camera.updateMatrixWorld();
     this.updateHover(t);
+    // クリックで開始した展示キューブの遷移を進める。
+    this.updateCube(t);
 
     // 露出: Hero では全開、Meaning で落ち着き、Issue でさらに沈めて
     // 文字を強く読ませる。重力中はわ��かに絞り、波パルスで微かに揺れる。
@@ -512,6 +682,7 @@ export class Showroom {
   dispose(): void {
     this.disposed = true;
     this.stop();
+    this.finishCube();
     document.body.style.cursor = '';
     window.removeEventListener('resize', this.resize);
     for (const video of this.exhibitVideos) {

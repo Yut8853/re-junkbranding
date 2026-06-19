@@ -117,6 +117,140 @@ import FinalCta from '../components/FinalCta.astro';
     }
   }
 
+  /* 展示モーダル: キューブ遷移の直後に中央へせり上がるオーバーレイ。 */
+  .exhibit-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    padding: var(--gutter);
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(6, 7, 11, 0.74) 0%,
+      rgba(6, 7, 11, 0.88) 70%,
+      rgba(6, 7, 11, 0.94) 100%
+    );
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    animation: exhibit-modal-fade 0.32s ease both;
+  }
+
+  .exhibit-modal {
+    position: relative;
+    width: min(56rem, 92vw);
+    max-height: 88vh;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(13, 18, 28, 0.92);
+    border: 1px solid rgba(174, 189, 210, 0.18);
+    box-shadow: 0 30px 90px rgba(6, 7, 11, 0.6);
+    transform-origin: 50% 50%;
+    /* 中央で薄い板になったキューブを引き継ぐので、回転はせず
+       わずかな拡大とフェードだけで滑らかにつなぐ。 */
+    animation: exhibit-modal-pop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .exhibit-modal__media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #06070b;
+  }
+
+  .exhibit-modal__media video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .exhibit-modal__body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.4rem 1.3rem;
+  }
+
+  .exhibit-modal__title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+    letter-spacing: 0.04em;
+    color: #fff;
+  }
+
+  .exhibit-modal__visit {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.6rem 1.4rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #06070b;
+    background: var(--warm, #f4dcbb);
+    border-radius: 999px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .exhibit-modal__visit:hover {
+    transform: translateY(-1px);
+    opacity: 0.9;
+  }
+
+  .exhibit-modal__close {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    z-index: 2;
+    width: 2.4rem;
+    height: 2.4rem;
+    display: grid;
+    place-items: center;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #fff;
+    background: rgba(6, 7, 11, 0.55);
+    border: 1px solid rgba(174, 189, 210, 0.24);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .exhibit-modal__close:hover {
+    background: rgba(6, 7, 11, 0.8);
+    transform: scale(1.05);
+  }
+
+  @keyframes exhibit-modal-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes exhibit-modal-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .exhibit-modal-backdrop,
+    .exhibit-modal {
+      animation: none;
+    }
+  }
+
   .funky-reveal-overlay {
     position: fixed;
     inset: 0;
