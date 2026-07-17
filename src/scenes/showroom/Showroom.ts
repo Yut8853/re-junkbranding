@@ -481,6 +481,7 @@ export class Showroom {
       }
     }
     this.hoveredTarget = hit;
+    document.body.dataset.handExhibit = hit ? 'true' : 'false';
     // ホバー中はリンクであることを示すポインタカーソルにする。
     document.body.style.cursor = hit ? 'pointer' : '';
 
@@ -696,6 +697,7 @@ export class Showroom {
     this.stop();
     this.finishCube();
     document.body.style.cursor = '';
+    delete document.body.dataset.handExhibit;
     window.removeEventListener('resize', this.resize);
     for (const video of this.exhibitVideos) {
       video.removeAttribute('src');

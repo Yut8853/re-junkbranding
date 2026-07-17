@@ -14,6 +14,9 @@ export default defineConfig({
   vite: {
     // GLSL ファイルは `?raw` サフィックスでプレーン文字列として import する。
     assetsInclude: ['**/*.glsl'],
+    optimizeDeps: {
+      exclude: ['@mediapipe/tasks-vision'],
+    },
     server: {
       // v0 / Vercel のプレビュー用サンドボックスドメインからのアクセスを許可する。
       allowedHosts: ['.vercel.run'],

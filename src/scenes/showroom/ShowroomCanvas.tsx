@@ -51,6 +51,26 @@ export default function ShowroomCanvas() {
     };
     window.addEventListener('pointermove', onPointer, { passive: true });
 
+    const handTarget = document.createElement('button');
+    handTarget.type = 'button';
+    handTarget.hidden = true;
+    handTarget.dataset.handExhibitTarget = '';
+    handTarget.setAttribute('aria-label', '展示を見る');
+    handTarget.addEventListener('click', () => scene.activateExhibit());
+    document.body.append(handTarget);
+    const onHandPointer = (e: Event) => {
+      const detail = (e as CustomEvent<{ x: number; y: number; active: boolean }>).detail;
+      if (!detail?.active) {
+        scene.clearPointer();
+        return;
+      }
+      scene.setPointer(
+        (detail.x / window.innerWidth) * 2 - 1,
+        (detail.y / window.innerHeight) * 2 - 1,
+      );
+    };
+    window.addEventListener('showroom:hand-pointer', onHandPointer);
+
     // ポインタがウィンドウの外へ本当に出たときだけホバーを解除する。
     // （pointerout は要素間の移動でも発火するため relatedTarget で判定する）
     const onPointerLeave = (e: PointerEvent) => {
@@ -132,12 +152,14 @@ export default function ShowroomCanvas() {
 
     return () => {
       window.removeEventListener('pointermove', onPointer);
+      window.removeEventListener('showroom:hand-pointer', onHandPointer);
       window.removeEventListener('pointerout', onPointerLeave);
       window.removeEventListener('blur', onBlur);
       window.removeEventListener('click', onClick);
       window.removeEventListener('showroom:exhibit-open', onExhibitOpen);
       window.removeEventListener('showroom:cta-hover', onCtaHover);
       triggers.forEach((item) => item.kill());
+      handTarget.remove();
       scene.dispose();
     };
   }, []);
