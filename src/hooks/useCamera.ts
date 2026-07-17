@@ -27,15 +27,21 @@ export function useCamera(videoRef: React.RefObject<HTMLVideoElement | null>) {
     const generation = generationRef.current;
     if (!window.isSecureContext) throw new DOMException('Insecure context', 'SecurityError');
     if (!navigator.mediaDevices?.getUserMedia) throw new DOMException('Media devices unavailable', 'NotSupportedError');
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        facingMode: 'user',
-        width: { ideal: 640, max: 960 },
-        height: { ideal: 480, max: 720 },
-        frameRate: { ideal: 24, max: 30 },
-      },
-    });
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: 'user' },
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          frameRate: { ideal: 24 },
+        },
+      });
+    } catch (error) {
+      if (!(error instanceof DOMException) || error.name !== 'OverconstrainedError') throw error;
+      stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+    }
     if (generation !== generationRef.current) {
       stream.getTracks().forEach((track) => track.stop());
       throw new DOMException('Camera startup cancelled', 'AbortError');
@@ -49,11 +55,22 @@ export function useCamera(videoRef: React.RefObject<HTMLVideoElement | null>) {
     endedHandlerRef.current = onEnded;
     stream.getTracks().forEach((track) => track.addEventListener('ended', onEnded, { once: true }));
     video.srcObject = stream;
+    let playbackTimeout = 0;
     try {
-      await video.play();
+      await Promise.race([
+        video.play(),
+        new Promise<never>((_, reject) => {
+          playbackTimeout = window.setTimeout(
+            () => reject(new DOMException('Camera video did not start', 'NotReadableError')),
+            8000,
+          );
+        }),
+      ]);
     } catch (error) {
       stopCamera();
       throw error;
+    } finally {
+      window.clearTimeout(playbackTimeout);
     }
     return stream;
   }, [stopCamera, videoRef]);
