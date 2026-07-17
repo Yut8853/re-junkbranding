@@ -6,7 +6,6 @@ import { CameraPreview } from './CameraPreview';
 import { ErrorDialog } from './ErrorDialog';
 import { HandCursor } from './HandCursor';
 import { HandModeGuide } from './HandModeGuide';
-import { LoadingScreen } from './LoadingScreen';
 import { ModeSelection } from './ModeSelection';
 import { ModeSwitcher } from './ModeSwitcher';
 import './controlExperience.css';
@@ -31,7 +30,7 @@ function handErrorMessage(error: unknown): string {
 }
 
 export default function ControlExperience() {
-  const { appMode, preferredMode, completeLoading, reopenSelector, selectMode } = useAppMode();
+  const { appMode, preferredMode, reopenSelector, selectMode } = useAppMode();
   const [activeMode, setActiveMode] = useState<ControlMode | null>(null);
   const [handLoading, setHandLoading] = useState(false);
   const [status, setStatus] = useState('');
@@ -84,7 +83,6 @@ export default function ControlExperience() {
 
   return (
     <>
-      {appMode === 'loading' && <LoadingScreen onComplete={completeLoading} />}
       {appMode === 'mode-selection' && (
         <ModeSelection
           preferredMode={preferredMode}
@@ -94,7 +92,7 @@ export default function ControlExperience() {
           onMouse={chooseMouse}
         />
       )}
-      {activeMode && appMode !== 'loading' && <ModeSwitcher mode={activeMode} onOpen={reopenSelector} />}
+      {activeMode && <ModeSwitcher mode={activeMode} onOpen={reopenSelector} />}
       <HandCursor cursorRef={cursorRef} progressRef={progressRef} />
       {activeMode === 'hand' && <HandModeGuide />}
       <CameraPreview videoRef={videoRef} />
