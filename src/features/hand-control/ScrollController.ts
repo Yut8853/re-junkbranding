@@ -1,4 +1,9 @@
-import { MAX_SCROLL_SPEED, SCROLL_DEAD_ZONE, SCROLL_SENSITIVITY } from './handControlConfig';
+import {
+  CURSOR_VERTICAL_MARGIN,
+  MAX_SCROLL_SPEED,
+  SCROLL_DEAD_ZONE,
+  SCROLL_SENSITIVITY,
+} from './handControlConfig';
 
 export class ScrollController {
   private anchorY: number | null = null;
@@ -10,6 +15,11 @@ export class ScrollController {
     }
     if (this.anchorY === null) {
       this.anchorY = handY;
+      return true;
+    }
+    if (handY <= CURSOR_VERTICAL_MARGIN || handY >= 1 - CURSOR_VERTICAL_MARGIN) {
+      const direction = handY <= CURSOR_VERTICAL_MARGIN ? 1 : -1;
+      window.scrollBy({ top: direction * MAX_SCROLL_SPEED, behavior: 'auto' });
       return true;
     }
     const displacement = this.anchorY - handY;

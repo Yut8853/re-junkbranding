@@ -65,7 +65,10 @@ export class DwellController {
   }
 
   private findTarget(x: number, y: number): HTMLElement | null {
-    if (document.body.dataset.handExhibit === 'true') {
+    if (
+      document.body.dataset.handExhibit === 'true' &&
+      !document.querySelector('[aria-modal="true"]')
+    ) {
       return document.querySelector<HTMLElement>('[data-hand-exhibit-target]');
     }
     const offsets = [

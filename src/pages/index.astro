@@ -308,9 +308,8 @@ import FinalCta from '../components/FinalCta.astro';
     perspective: 900px;
     isolation: isolate;
     --blend-overlap: clamp(24rem, 100vh, 68rem);
-    /* セクション間に余白を多めに取り、重力遷移が専用の長い
-       スクロール区間をしっかり確保できるようにする。 */
-    --section-gap: clamp(28rem, 130vh, 72rem);
+    /* 重力遷移の余白は、ハンドスクロールでも自然に通過できる長さに留める。 */
+    --section-gap: clamp(12rem, 48vh, 30rem);
     --meaning-rise: 3.5rem;
   }
 

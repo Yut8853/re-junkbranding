@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ControlMode } from '../hooks/useAppMode';
 import { useAppMode } from '../hooks/useAppMode';
 import { useHandTracking } from '../hooks/useHandTracking';
@@ -80,6 +80,15 @@ export default function ControlExperience() {
     selectMode('mouse');
     setStatus('Mouse Modeを開始しました。');
   };
+
+  useEffect(() => {
+    if (activeMode !== 'hand') return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') chooseMouse();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeMode, chooseMouse]);
 
   return (
     <>
