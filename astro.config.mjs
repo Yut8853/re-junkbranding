@@ -29,8 +29,7 @@ export default defineConfig({
             if (!id.includes('node_modules')) return undefined;
             if (id.includes('/three/')) return 'three';
             if (id.includes('/gsap/')) return 'animation';
-            if (id.includes('/react/') || id.includes('/react-dom/')) return 'react';
-            return 'vendor';
+            return undefined;
           },
         },
       },
